@@ -1,4 +1,4 @@
-package com.bilgesucakir.stitch_grapher;
+package com.bilgesucakir.stitchgrapher;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,4 +1,4 @@
-package com.bilgesucakir.stitch_grapher.stitch;
+package com.bilgesucakir.stitchgrapher.stitch;
 
 /**
  * Enum representing different types of crochet stitches.
@@ -7,7 +7,8 @@ package com.bilgesucakir.stitch_grapher.stitch;
  * - Single Crochet (SC),
  * - Half Double Crochet (HDC),
  * - Double Crochet (DC),
- * - Treble Crochet (TR),
+ * - Half Treble Crochet (HTR),
+ * - Triple Crochet (TR),
  * - Slip Stitch (SLST),
  * - Chain (CH).
  */
@@ -16,6 +17,7 @@ public enum StitchType {
     SC,
     HDC,
     DC,
+    HTR,
     TR,
     SLST,
     CH

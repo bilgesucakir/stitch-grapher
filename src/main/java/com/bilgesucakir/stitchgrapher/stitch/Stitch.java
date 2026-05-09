@@ -1,4 +1,4 @@
-package com.bilgesucakir.stitch_grapher.stitch;
+package com.bilgesucakir.stitchgrapher.stitch;
 
 /**
  * Represents a crochet stitch with its properties.
@@ -13,5 +13,7 @@ public interface Stitch {
 
     float getBaseYarnUsage();
 
-    int getPullThroughCount();
+    int getPullThrough();
+
+    int getYarnOver();
 }

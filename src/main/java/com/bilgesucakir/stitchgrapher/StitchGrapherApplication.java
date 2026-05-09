@@ -1,4 +1,4 @@
-package com.bilgesucakir.stitch_grapher;
+package com.bilgesucakir.stitchgrapher;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

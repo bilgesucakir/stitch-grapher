@@ -1,4 +1,4 @@
-package com.bilgesucakir.stitch_grapher.stitch;
+package com.bilgesucakir.stitchgrapher.stitch;
 
 /**
  * Abstract base class for crochet stitches, providing common properties and methods.
@@ -10,14 +10,16 @@ public abstract class AbstractStitch implements Stitch{
     private final float baseHeight;
     private final float baseWidth;
     private final float baseYarnUsage;
-    private final int pullThroughCount;
+    private final int pullThrough;
+    private final int yarnOver;
 
-    public AbstractStitch(StitchType type, float baseHeight, float baseWidth, float baseYarnUsage, int pullThroughCount) {
+    public AbstractStitch(StitchType type, float baseHeight, float baseWidth, float baseYarnUsage, int pullThrough, int yarnOver) {
         this.type = type;
         this.baseHeight = baseHeight;
         this.baseWidth = baseWidth;
         this.baseYarnUsage = baseYarnUsage;
-        this.pullThroughCount = pullThroughCount;
+        this.pullThrough = pullThrough;
+        this.yarnOver = yarnOver;
     }
 
     @Override
@@ -41,8 +43,13 @@ public abstract class AbstractStitch implements Stitch{
     }
 
     @Override
-    public int getPullThroughCount() {
-        return pullThroughCount;
+    public int getPullThrough() {
+        return pullThrough;
+    }
+
+    @Override
+    public int getYarnOver() {
+        return yarnOver;
     }
 
     @Override
