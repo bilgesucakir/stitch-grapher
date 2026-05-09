@@ -2,10 +2,15 @@ package com.bilgesucakir.stitchgrapher.controller;
 
 import com.bilgesucakir.stitchgrapher.dto.GraphEdgeDto;
 import com.bilgesucakir.stitchgrapher.dto.GraphNodeDto;
+import com.bilgesucakir.stitchgrapher.dto.PatternInputDto;
 import com.bilgesucakir.stitchgrapher.dto.StitchGraphDto;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.bilgesucakir.stitchgrapher.graph.RowDirection;
+import com.bilgesucakir.stitchgrapher.parser.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,56 +19,43 @@ import java.util.List;
 @RestController
 public class GraphController {
 
-    @GetMapping("/api/graph")
-    public StitchGraphDto getGraph() {
+    @PostMapping("/api/graph")
+    public StitchGraphDto generateGraph(@RequestBody PatternInputDto input) {
 
-        List<GraphNodeDto> nodes = List.of(
-            new GraphNodeDto("a", "a", 0, 0, "LEFT_TO_RIGHT"),
-            new GraphNodeDto("b", "b", 0, 1, "LEFT_TO_RIGHT"),
-            new GraphNodeDto("c", "c", 0, 2, "LEFT_TO_RIGHT"),
-            new GraphNodeDto("d", "d", 1, 0, "RIGHT_TO_LEFT"),
-            new GraphNodeDto("e", "e", 1,1, "RIGHT_TO_LEFT"),
-            new GraphNodeDto("f", "f", 1,2, "RIGHT_TO_LEFT"),
-            new GraphNodeDto("g", "g", 1,3, "RIGHT_TO_LEFT"),
-            new GraphNodeDto("h", "h", 1,4, "RIGHT_TO_LEFT"),
-            new GraphNodeDto("i", "i", 2, 0, "LEFT_TO_RIGHT"),
-            new GraphNodeDto("j", "j", 2,1, "LEFT_TO_RIGHT"),
-            new GraphNodeDto("k", "k", 2,2, "LEFT_TO_RIGHT")
-        );
+        PatternParser parser = new PatternParser();
+        ParsedPattern pattern = parser.parse(input.rows());
+        List<GraphNodeDto> nodes = new ArrayList<>();
+        List<GraphEdgeDto> edges = new ArrayList<>();
 
-        List<GraphEdgeDto> edges = List.of(
-            //row1
-            new GraphEdgeDto("a", "b"),
-            new GraphEdgeDto("b", "c"),
+        int nodeCounter = 0;
+        for (ParsedRow row : pattern.getRows()) {
 
-            //row2
-            new GraphEdgeDto("d", "e"),
-            new GraphEdgeDto("e", "f"),
-            new GraphEdgeDto("f", "g"),
-            new GraphEdgeDto("g", "h"),
+            RowDirection direction = row.getIndex() % 2 == 0
+                    ? RowDirection.LEFT_TO_RIGHT
+                    : RowDirection.RIGHT_TO_LEFT;
 
-            //row3
-            new GraphEdgeDto("i", "j"),
-            new GraphEdgeDto("j", "k"),
+            List<String> rowNodeIds = new ArrayList<>();
+            for (int i = 0; i < row.getOperations().size(); i++) {
+                ParsedOperation operation = row.getOperations().get(i);
+                String nodeId = "n" + nodeCounter++;
+                rowNodeIds.add(nodeId);
 
-            //row1-row2
-            new GraphEdgeDto("a","h"),
-            new GraphEdgeDto("a", "g"),
-            new GraphEdgeDto("b", "f"),
-            new GraphEdgeDto("c", "e"),
-            new GraphEdgeDto("c", "d"),
+                nodes.add(new GraphNodeDto(
+                        nodeId,
+                        operation.getType().name(),
+                        row.getIndex(),
+                        i,
+                        direction.name()));
+            }
 
-            //row2-row3
-            new GraphEdgeDto("d", "k"),
-            new GraphEdgeDto("e", "k"),
-            new GraphEdgeDto("f", "j"),
-            new GraphEdgeDto("g", "j"),
-            new GraphEdgeDto("h", "i")
-        );
+            for (int i = 0; i < rowNodeIds.size() - 1; i++) {
+                String source = rowNodeIds.get(i);
+                String target = rowNodeIds.get(i + 1);
 
-        return new StitchGraphDto(
-            nodes,
-            edges
-        );
+                edges.add(new GraphEdgeDto(source, target));
+            }
+        }
+
+        return new StitchGraphDto(nodes, edges);
     }
 }

@@ -5,6 +5,11 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a row of stitches in the stitch graph.
+ * Each row has an index, a direction (right or left),
+ * and a list of stitch nodes that belong to that row.
+ */
 @Getter
 public class Row {
 

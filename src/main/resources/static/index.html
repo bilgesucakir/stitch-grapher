@@ -6,9 +6,13 @@
         <link rel="stylesheet" href="style.css">
         <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
     </head>
-
     <body>
         <h1>Stitch Grapher</h1>
+        <div id="controls">
+            <div id="rows-container"></div>
+            <button onclick="addRow()">Add Row</button>
+            <button onclick="generateGraph()">Generate Graph</button>
+        </div>
         <div id="cy"></div>
         <script src="app.js"></script>
     </body>

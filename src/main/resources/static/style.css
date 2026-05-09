@@ -3,13 +3,19 @@ body {
     margin: 0;
     padding: 0;
 }
-
 h1 {
     padding: 16px;
 }
-
 #cy {
     width: 100%;
     height: 90vh;
     border: 1px solid black;
+}
+#controls {
+    padding: 16px;
+}
+.row-input {
+    display: block;
+    margin-bottom: 8px;
+    width: 300px;
 }
