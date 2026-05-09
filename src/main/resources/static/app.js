@@ -53,6 +53,7 @@ function renderGraph(data) {
 
     data.nodes.forEach(node => {
         let visualPosition;
+
         if (node.direction === 'LEFT_TO_RIGHT') {
             visualPosition = node.position;
         } else {
