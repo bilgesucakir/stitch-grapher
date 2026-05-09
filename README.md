@@ -27,7 +27,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 - **Output**: Sample graph visualization showing stitch connections and hierarchy
 
 ![img.png](img.png)
-- First row produces 3 stitches. Second row has 2 increase operations using row 1 stitches (1*2 + 1 + 1*2), resulting in 5 stitches. Row 3 has 2 decrease operations using row 2 stitches ((1+1)/2 + (1+1)/2 + 1), resulting in 3 stitches.
+- First row produces 3 stitches. Second row has 2 increase operations using row 1 stitches (1x2 + 1 + 1x2), resulting in 5 stitches. Row 3 has 2 decrease operations using row 2 stitches ((1+1)/2 + (1+1)/2 + 1), resulting in 3 stitches.
 - So if you have an increase operation, you should have 2 child nodes in the next step. 
 - If you have a decrease operation, you should have 2 parent nodes in the previous step.
 - If you have a normal stitch, you should have 1 parent node in the previous step and 1 child node in the next step.
