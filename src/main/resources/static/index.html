@@ -1,47 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-    <meta charset="UTF-8">
-
-    <title>
-        Stitch Grapher
-    </title>
-
-    <link
-            rel="stylesheet"
-            href="style.css"
-    >
-
-    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-            }
-        }
-    </script>
-
-    <script
-            type="module"
-            src="app.js"
-    ></script>
-
+  <meta charset="UTF-8">
+  <title>Stitch Grapher</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <h1>Stitch Grapher</h1>
+
   <div id="mode-selector">
+    <label for="crochet-mode">Crochet mode:</label>
     <select id="crochet-mode">
       <option value="FLAT">Flat</option>
       <option value="CIRCULAR">Circular</option>
     </select>
   </div>
+
   <div id="controls">
     <div id="rows-container"></div>
     <button id="add-row-btn">Add Row</button>
     <button id="generate-graph-btn">Generate Graph</button>
   </div>
+
   <div id="cy"></div>
 </body>
 
