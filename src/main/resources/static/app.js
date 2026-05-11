@@ -1,6 +1,14 @@
-let rowCounter = 0;
+import * as THREE
+from 'three';
 
+import { OrbitControls }
+from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+let rowCounter = 0;
 addRow();
+
+document.getElementById('add-row-btn').addEventListener('click', addRow);
+document.getElementById('generate-graph-btn').addEventListener('click', generateGraph);
 
 function addRow() {
   const container = document.getElementById('rows-container');
@@ -17,7 +25,6 @@ function generateGraph() {
   const rows = [];
   rowInputs.forEach(input => rows.push(input.value));
   const mode = document.getElementById('crochet-mode').value;
-
   fetch('/api/graph', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -26,10 +33,13 @@ function generateGraph() {
     .then(response => response.json())
     .then(data => {
       if (mode === 'CIRCULAR') {
-        renderCircularGraph(data);
+        renderCircularGraph3D(data);
       } else {
         renderFlatGraph(data);
       }
+    })
+    .catch(err => {
+      console.error('Failed to generate graph', err);
     });
 }
 
@@ -41,113 +51,88 @@ function renderFlatGraph(data) {
   const rowSpacing = 140;
   const rowLengths = {};
 
-  data.nodes.forEach(node => {
-    if (!rowLengths[node.row]) {
-      rowLengths[node.row] = 0;
-    }
-    rowLengths[node.row]++;
-  });
-
+  data.nodes.forEach(node => { rowLengths[node.row] = (rowLengths[node.row] || 0) + 1; });
   const maxRowLength = Math.max(...Object.values(rowLengths));
   const maxRow = Math.max(...data.nodes.map(node => node.row));
 
   data.nodes.forEach(node => {
-    let visualPosition;
-
-    // Mirror turned rows visually.
-    if (node.direction === 'LEFT_TO_RIGHT') {
-      visualPosition = node.position;
-    } else {
-      visualPosition = rowLengths[node.row] - node.position - 1;
-    }
-
+    const visualPosition = node.direction === 'LEFT_TO_RIGHT' ? node.position : rowLengths[node.row] - node.position - 1;
     const rowStartX = offsetX + ((maxRowLength - rowLengths[node.row]) * spacing) / 2;
     const x = rowStartX + visualPosition * spacing;
     const y = (maxRow - node.row) * rowSpacing + offsetY;
-
-    elements.push({
-      data: {
-        id: node.id,
-        label: node.label
-      },
-      position: { x: x, y: y }
-    });
-  });
-
-  data.edges.forEach(edge => {
-    elements.push({
-      data: {
-        source: edge.source,
-        target: edge.target
-      }
-    });
-  });
-
-  document.getElementById('cy').innerHTML = '';
-
-  cytoscape({
-    container: document.getElementById('cy'),
-    elements: elements,
-    style: [
-      {
-        selector: 'node',
-        style: {
-          'label': 'data(label)',
-          'text-valign': 'center',
-          'text-halign': 'center'
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'curve-style': 'bezier',
-          'target-arrow-shape': 'triangle'
-        }
-      }
-    ],
-    layout: {
-      name: 'preset'
-    }
-  });
-}
-
-function renderCircularGraph(data) {
-  const elements = [];
-  const centerX = 700;
-  const centerY = 500;
-  const baseRadius = 80;
-  const rowSpacing = 120;
-  const rowLengths = {};
-
-  data.nodes.forEach(node => {
-    if (!rowLengths[node.row]) rowLengths[node.row] = 0;
-    rowLengths[node.row]++;
-  });
-
-  data.nodes.forEach(node => {
-    const stitchCount = rowLengths[node.row];
-    const angle = (2 * Math.PI * node.position) / stitchCount;
-    const radius = baseRadius + node.row * rowSpacing;
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-
-    elements.push({
-      data: { id: node.id, label: node.label },
-      position: { x: x, y: y }
-    });
+    elements.push({ data: { id: node.id, label: node.label }, position: { x: x, y: y } });
   });
 
   data.edges.forEach(edge => elements.push({ data: { source: edge.source, target: edge.target } }));
 
-  document.getElementById('cy').innerHTML = '';
-
+  const container = document.getElementById('cy');
+  container.innerHTML = '';
   cytoscape({
-    container: document.getElementById('cy'),
+    container: container,
     elements: elements,
     style: [
-      { selector: 'node', style: { 'label': 'data(label)', 'text-valign': 'center', 'text-halign': 'center' } },
+      { selector: 'node', style: { label: 'data(label)', 'text-valign': 'center', 'text-halign': 'center' } },
       { selector: 'edge', style: { 'curve-style': 'bezier', 'target-arrow-shape': 'triangle' } }
     ],
     layout: { name: 'preset' }
   });
+}
+
+function renderCircularGraph3D(data) {
+  const container = document.getElementById('cy');
+  container.innerHTML = '';
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, 900);
+  container.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  camera.position.set(0, 200, 1200);
+  camera.lookAt(0, 0, 0);
+  controls.update();
+
+  const nodeMap = {};
+  const rowLengths = {};
+  data.nodes.forEach(node => { rowLengths[node.row] = (rowLengths[node.row] || 0) + 1; });
+
+  const cylinderRadius = 250;
+  const rowHeight = 120;
+
+  data.nodes.forEach(node => {
+    const stitchCount = rowLengths[node.row];
+    const angle = (2 * Math.PI * node.position) / stitchCount;
+    const x = cylinderRadius * Math.cos(angle);
+    const z = cylinderRadius * Math.sin(angle);
+    const y = node.row * rowHeight;
+
+    const geometry = new THREE.SphereGeometry(18, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(x, y, z);
+    scene.add(sphere);
+    nodeMap[node.id] = { x, y, z };
+  });
+
+  data.edges.forEach(edge => {
+    const source = nodeMap[edge.source];
+    const target = nodeMap[edge.target];
+    if (!source || !target) return;
+    const points = [new THREE.Vector3(source.x, source.y, source.z), new THREE.Vector3(target.x, target.y, target.z)];
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const line = new THREE.Line(geometry, material);
+    scene.add(line);
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  animate();
 }
