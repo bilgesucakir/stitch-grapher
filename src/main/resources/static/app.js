@@ -15,22 +15,25 @@ function addRow() {
 function generateGraph() {
   const rowInputs = document.querySelectorAll('.row-input');
   const rows = [];
-  rowInputs.forEach(input => {
-    rows.push(input.value);
-  });
+  rowInputs.forEach(input => rows.push(input.value));
+  const mode = document.getElementById('crochet-mode').value;
 
   fetch('/api/graph', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ rows: rows })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rows: rows, mode: mode })
   })
     .then(response => response.json())
-    .then(renderGraph);
+    .then(data => {
+      if (mode === 'CIRCULAR') {
+        renderCircularGraph(data);
+      } else {
+        renderFlatGraph(data);
+      }
+    });
 }
 
-function renderGraph(data) {
+function renderFlatGraph(data) {
   const elements = [];
   const spacing = 140;
   const offsetX = 100;
@@ -105,5 +108,46 @@ function renderGraph(data) {
     layout: {
       name: 'preset'
     }
+  });
+}
+
+function renderCircularGraph(data) {
+  const elements = [];
+  const centerX = 700;
+  const centerY = 500;
+  const baseRadius = 80;
+  const rowSpacing = 120;
+  const rowLengths = {};
+
+  data.nodes.forEach(node => {
+    if (!rowLengths[node.row]) rowLengths[node.row] = 0;
+    rowLengths[node.row]++;
+  });
+
+  data.nodes.forEach(node => {
+    const stitchCount = rowLengths[node.row];
+    const angle = (2 * Math.PI * node.position) / stitchCount;
+    const radius = baseRadius + node.row * rowSpacing;
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
+    elements.push({
+      data: { id: node.id, label: node.label },
+      position: { x: x, y: y }
+    });
+  });
+
+  data.edges.forEach(edge => elements.push({ data: { source: edge.source, target: edge.target } }));
+
+  document.getElementById('cy').innerHTML = '';
+
+  cytoscape({
+    container: document.getElementById('cy'),
+    elements: elements,
+    style: [
+      { selector: 'node', style: { 'label': 'data(label)', 'text-valign': 'center', 'text-halign': 'center' } },
+      { selector: 'edge', style: { 'curve-style': 'bezier', 'target-arrow-shape': 'triangle' } }
+    ],
+    layout: { name: 'preset' }
   });
 }
