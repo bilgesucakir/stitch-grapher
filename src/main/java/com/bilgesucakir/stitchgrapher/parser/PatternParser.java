@@ -1,51 +1,52 @@
 package com.bilgesucakir.stitchgrapher.parser;
 
-import java.util.ArrayList;
+import com.bilgesucakir.stitchgrapher.parser.expand.PatternExpander;
+import com.bilgesucakir.stitchgrapher.parser.tokenize.PatternTokenizer;
+import com.bilgesucakir.stitchgrapher.parser.tokenize.TokenType;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
- * Parses the input pattern from a list of strings into a structured format.
- * Each string represents a row of stitches, and each token in the string represents a stitch operation.
- * The parser converts these tokens into a list of ParsedRow objects, which contain the row index and the list of operations for that row.
+ * Parses a list of stitch pattern rows into a {@link ParsedPattern} consisting of {@link ParsedRow}s.
+ * For each non-empty input row the parser tokenizes, expands shorthands and converts operation tokens
+ * into ParsedOperation objects while preserving the original row index.
  */
+@Component
 public class PatternParser {
 
-    //TODO: consider inputs such as (inc, sc)x6 for a line. So there can exist other tokens than operation type.
-    public ParsedPattern parse(List<String> rows) {
-        List<ParsedRow> parsedRows = new ArrayList<>();
-        for (int i=0; i<rows.size(); i++) {
-            String row = rows.get(i).trim();
-            if (row.isEmpty()) {
-                continue;
-            }
+    private final PatternTokenizer tokenizer;
+    private final PatternExpander expander;
 
-            String[] tokens = row.split("\\s+");
-            List<ParsedOperation> operations = new ArrayList<>();
-            for (String token : tokens) {
-
-                OperationType type = parseToken(token);
-                operations.add(new ParsedOperation(type));
-            }
-
-            parsedRows.add(new ParsedRow(i, operations));
-        }
-
-        return new ParsedPattern(parsedRows);
+    public PatternParser(PatternTokenizer tokenizer, PatternExpander expander) {
+        this.tokenizer = tokenizer;
+        this.expander = expander;
     }
 
-    private OperationType parseToken(String token) {
-        return switch (token.toLowerCase()) {
-            case "sc" -> OperationType.SC;
-            case "hdc" -> OperationType.HDC;
-            case "dc" -> OperationType.DC;
-            case "htr" -> OperationType.HTR;
-            case "tr" -> OperationType.TR;
-            case "slst" -> OperationType.SLST;
+    public ParsedPattern parse(List<String> rows) {
+        List<ParsedRow> parsedRows = IntStream.range(0, rows.size())
+            .mapToObj(i -> {
+                String row = rows.get(i).trim();
+                if (row.isEmpty()) {
+                    return null;
+                }
 
-            case "inc" -> OperationType.INC;
-            case "dec" -> OperationType.DEC;
+                // tokenize -> expand -> filter operation tokens -> map to ParsedOperation
+                List<ParsedOperation> operations = expander
+                    .expand(tokenizer.tokenize(row))
+                    .stream()
+                    .filter(t -> t.type() == TokenType.OPERATION)
+                    .map(t -> new ParsedOperation(OperationType.from(t.value())))
+                    .collect(Collectors.toList());
 
-            default -> throw new ParseException("Unknown token: " + token);
-        };
+                return new ParsedRow(i, operations);
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+        return new ParsedPattern(parsedRows);
     }
 }

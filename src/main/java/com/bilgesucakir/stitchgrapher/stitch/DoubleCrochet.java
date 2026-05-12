@@ -1,5 +1,9 @@
 package com.bilgesucakir.stitchgrapher.stitch;
 
+/**
+ * Represents a double crochet stitch with template properties.
+ * Currently uses hardcoded example values for sizing and yarn usage.
+ */
 public class DoubleCrochet extends AbstractStitch{
 
     //Temporary hardcoded values for double crochet stitch properties

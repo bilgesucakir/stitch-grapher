@@ -1,4 +1,4 @@
-package com.bilgesucakir.stitchgrapher.parser;
+package com.bilgesucakir.stitchgrapher.exception;
 
 /**
  * Custom exception class for handling parsing errors in the stitch pattern parser.
