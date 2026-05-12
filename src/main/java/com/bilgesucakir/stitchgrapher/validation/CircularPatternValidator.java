@@ -1,17 +1,17 @@
 package com.bilgesucakir.stitchgrapher.validation;
-import com.bilgesucakir.stitchgrapher.exception.ValidationException;
-import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 
 import com.bilgesucakir.stitchgrapher.exception.InvalidPatternException;
+import com.bilgesucakir.stitchgrapher.exception.ValidationException;
+import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.ParsedRow;
 import org.springframework.stereotype.Component;
 
 /**
- * Validator for flat (non-circular) crochet patterns.
+ * Validator for circular crochet patterns.
  */
 @Component
-public class FlatPatternValidator implements PatternValidator{
+public class CircularPatternValidator implements PatternValidator {
 
     @Override
     public void validate(ParsedPattern pattern) throws InvalidPatternException {
@@ -22,17 +22,18 @@ public class FlatPatternValidator implements PatternValidator{
 
             int rr = 0;
             int ro = 0;
+
             for (ParsedOperation op : row.getOperations()) {
                 rr += op.getType().getRequiredInput();
                 ro += op.getType().getProducedOutput();
             }
 
-            if (previousOutput != null && rr > previousOutput) {
+            if (previousOutput != null && rr != previousOutput) {
                 int rowNum = row.getIndex() + 1;
                 throw new ValidationException(
                         "Row " + rowNum +
-                                " requires " + rr +
-                                " stitches but previous row produced only " + previousOutput
+                                " must consume exactly " + previousOutput +
+                                " stitches but requires " + rr
                 );
             }
 

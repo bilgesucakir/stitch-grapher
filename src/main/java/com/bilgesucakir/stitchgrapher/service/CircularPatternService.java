@@ -5,7 +5,7 @@ import com.bilgesucakir.stitchgrapher.graph.StitchGraph;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.PatternParser;
 import com.bilgesucakir.stitchgrapher.topology.CircularTopologyBuilder;
-import com.bilgesucakir.stitchgrapher.validation.CirculatPatternValidator;
+import com.bilgesucakir.stitchgrapher.validation.CircularPatternValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +16,11 @@ import org.springframework.stereotype.Service;
 public class CircularPatternService implements PatternService{
 
     private final PatternParser parser;
-    private final CirculatPatternValidator validator;
+    private final CircularPatternValidator validator;
     private final CircularTopologyBuilder topologyBuilder;
 
     @Autowired
-    public CircularPatternService(PatternParser parser, CirculatPatternValidator validator,
+    public CircularPatternService(PatternParser parser, CircularPatternValidator validator,
                               CircularTopologyBuilder topologyBuilder) {
         this.parser = parser;
         this.validator = validator;
