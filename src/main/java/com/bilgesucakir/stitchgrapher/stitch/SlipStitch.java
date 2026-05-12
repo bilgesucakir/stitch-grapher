@@ -1,5 +1,9 @@
 package com.bilgesucakir.stitchgrapher.stitch;
 
+/**
+ * Represents a slip stitch with template properties.
+ * Currently uses hardcoded example values for sizing and yarn usage.
+ */
 public class SlipStitch extends AbstractStitch{
 
     //Temporary hardcoded values for slip stitch properties
