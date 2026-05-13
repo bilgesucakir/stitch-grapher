@@ -10,38 +10,48 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 
 ### Core Packages
 
-- **`stitch`** - Stitch type definitions and implementations
-  - `AbstractStitch.java` - Base abstract class for all stitches
-  - `Stitch.java` - Stitch interface contract
-  - `StitchType.java` - Enumeration of supported stitch types
-  - Concrete implementations: `SingleCrochet`, `DoubleCrochet`, `HalfDoubleCrochet`, `TrebleCrochet`, `SlipStitch`, etc.
+- **`parser`** - Pattern parsing pipeline
+  - `PatternTokenizer.java` - Tokenizes raw input 
+  - `PatternExpander.java` - Expands shorthand notations into full operation lists
+  - `PatternParser.java` - Converts tokens into structured parsed model
+  - `ParsedPattern.java`, `ParsedRow.java`, `ParsedOperation.java`
+  - `OperationType.java` - Enum including stitch types and operations (`inc`, `dec`)
+  - `CrochetMode.java` - Enum for FLAT and CIRCULAR modes
 
-- **`parser`** - Pattern parsing and validation
-  - `PatternParser.java` - Main parser for text-based crochet patterns
-  - `ParsedPattern.java` - Parsed pattern object containing rows
-  - `ParsedRow.java` - Individual row representation
-  - `ParsedOperation.java` - Single operation (stitch or modifier)
-  - `OperationType.java` - Enum for operation types (STITCH, INCREASE, DECREASE)
-  - `ParseException.java` - Custom exception for parsing errors
+- **`validation`** - Pattern validation layer
+  - `PatternValidator.java` - Validator interface
+  - `FlatPatternValidator.java` - Allows unused stitches
+  - `CircularPatternValidator.java` - Requires exact usage 
+  - `ValidationException.java`
 
-- **`graph`** - Graph data structures and topology
-  - `StitchGraph.java` - Main graph representation
-  - `StitchNode.java` - Individual node in the graph
-  - `Row.java` - Row container with positioning info
-  - `RowDirection.java` - Enum for row direction (LEFT_TO_RIGHT, RIGHT_TO_LEFT)
+- **`topology`** - Graph construction 
+  - `TopologyBuilder.java` - Interface
+  - `FlatTopologyBuilder.java`
+  - `CircularTopologyBuilder.java`
 
-- **`topology`** - Graph construction and connectivity
-  - `TopologyBuilder.java` - Builds connectivity graph from parsed patterns
+- **`service`** - Application layer orchestration
+  - `PatternService.java`
+  - `FlatPatternService.java`
+  - `CircularPatternService.java`
+  - Handles: parse → validate → topology
 
-- **`dto`** - Data Transfer Objects for API communication
-  - `PatternInputDto.java` - Request DTO for pattern input
-  - `StitchGraphDto.java` - Response DTO for graph visualization
-  - `GraphNodeDto.java` - Node representation in API response
-  - `GraphEdgeDto.java` - Edge representation in API response
+- **`mapper`** - DTO conversion
+  - `StitchGraphMapper.java`
 
-- **`controller`** - REST API endpoints
-  - `GraphController.java` - REST endpoints for graph generation
+- **`graph`** - Graph data structures
+  - `StitchGraph.java`
+  - `StitchNode.java`
+  - `Row.java`
+  - `RowDirection.java`
 
+- **`dto`** - API communication
+  - `PatternInputDto.java`
+  - `StitchGraphDto.java`
+  - `GraphNodeDto.java`
+  - `GraphEdgeDto.java`
+
+- **`controller`** - REST API
+  - `GraphController.java`
 ### Core Components
 
 - **`StitchType.java`** - Enumeration defining supported crochet stitch types
@@ -51,18 +61,19 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 ## Features
 
 ### Currently Implemented
-- ✅ Parse text-based crochet patterns (bracket notation)
-- ✅ Input validation for pattern syntax and operations
-- ✅ Model stitch connectivity and topology
-- ✅ Generate graph visualizations with row-aware positioning
-- ✅ Support for multiple stitch types (Single Crochet, Double Crochet, Half Double Crochet, etc.)
-- ✅ Directional row support (left-to-right and right-to-left)
-- ✅ REST API endpoint for graph generation
+- Parse text-based crochet patterns (
+- Input validation for pattern syntax and operations
+- Model stitch connectivity and topology
+- Generate graph visualizations with row-aware positioning
+- Support for multiple stitch types 
+- Directional row support 
+- REST API endpoint for graph generation
 
 ### To Be Implemented
-- ⏳ Pattern input valication for edge cases and complex patterns
-- ⏳ Increase operations (inc) - stitch multiplication
-- ⏳ Decrease operations (dec) - stitch reduction
+- Pattern input validation for edge cases and complex patterns
+- Increase operations (inc) - stitch multiplication
+- Decrease operations (dec) - stitch reduction
+- Better visualization of stitch connections and hierarchy for flat and circular patterns
 
 ## A Basic Example
 
@@ -101,10 +112,9 @@ Accepts a JSON payload with crochet pattern rows and returns a graph representat
 ```json
 {
   "rows": [
-    "3sc",
-    "sc, sc, sc",
-    "2sc"
-  ]
+    "3sc"
+  ], 
+  "mode": "FLAT"
 }
 ```
 
@@ -112,14 +122,37 @@ Accepts a JSON payload with crochet pattern rows and returns a graph representat
 ```json
 {
   "nodes": [
-    {"id": "node-0-0", "label": "sc", "row": 0, "position": 0, "direction": "LEFT_TO_RIGHT"},
-    {"id": "node-0-1", "label": "sc", "row": 0, "position": 1, "direction": "LEFT_TO_RIGHT"},
-    {"id": "node-0-2", "label": "sc", "row": 0, "position": 2, "direction": "LEFT_TO_RIGHT"}
+    {
+      "id": "5ebe4049-239a-4bba-b337-6648d3646009",
+      "label": "SC",
+      "row": 0,
+      "position": 0,
+      "direction": "LEFT_TO_RIGHT"
+    },
+    {
+      "id": "604dbe0d-5dae-485f-bb1d-0c715395c801",
+      "label": "SC",
+      "row": 0,
+      "position": 1,
+      "direction": "LEFT_TO_RIGHT"
+    },
+    {
+      "id": "3d04c832-a2f0-4a2b-8730-b21134b874b0",
+      "label": "SC",
+      "row": 0,
+      "position": 2,
+      "direction": "LEFT_TO_RIGHT"
+    }
   ],
   "edges": [
-    {"source": "node-0-0", "target": "node-1-0"},
-    {"source": "node-0-1", "target": "node-1-1"},
-    {"source": "node-0-2", "target": "node-1-2"}
+    {
+      "source": "5ebe4049-239a-4bba-b337-6648d3646009",
+      "target": "604dbe0d-5dae-485f-bb1d-0c715395c801"
+    },
+    {
+      "source": "604dbe0d-5dae-485f-bb1d-0c715395c801",
+      "target": "3d04c832-a2f0-4a2b-8730-b21134b874b0"
+    }
   ]
 }
 ```
