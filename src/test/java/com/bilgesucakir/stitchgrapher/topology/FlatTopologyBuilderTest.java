@@ -307,4 +307,41 @@ public class FlatTopologyBuilderTest {
         assertThat(nodeRow2.getParents().size()).isEqualTo(1);
         assertThat(nodeRow2.getParents().get(0).equals(nodeRow1)).isTrue();
     }
+
+    @Test
+    void build_twoRowsExpandingWithChains_buildsCorrectGraph(){
+        ParsedPattern pattern = new ParsedPattern(List.of(
+                new ParsedRow(0, List.of(
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.SC)
+                )),
+                new ParsedRow(1, List.of(
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.TR),
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH)
+                ))
+        ));
+
+        StitchGraph graph = assertDoesNotThrow(() -> builder.build(pattern));
+
+        assertNotNull(graph);
+        assertEquals(2, graph.getRows().size());
+        assertEquals(2, graph.getRows().get(0).getStitches().size());
+        assertEquals(4, graph.getRows().get(1).getStitches().size());
+
+        StitchNode ch1 = graph.getRows().get(1).getStitches().get(2);
+        StitchNode ch2 = graph.getRows().get(1).getStitches().get(3);
+
+        //verify chains
+        assertThat(ch1.getParents()).isEmpty();
+        assertThat(ch1.getChildren()).isEmpty();
+        assertThat(ch1.getNext().equals(ch2)).isTrue();
+        assertThat(ch1.getPrevious().getStitch().getType().equals(StitchType.TR)).isTrue();
+        assertThat(ch2.getParents()).isEmpty();
+        assertThat(ch2.getChildren()).isEmpty();
+        assertThat(ch2.getPrevious().equals(ch1)).isTrue();
+        assertThat(ch2.getNext()).isNull();
+
+    }
 }

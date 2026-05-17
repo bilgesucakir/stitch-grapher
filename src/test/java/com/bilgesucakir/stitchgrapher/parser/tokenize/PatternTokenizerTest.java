@@ -24,12 +24,12 @@ public class PatternTokenizerTest {
 
     @Test
     void tokenize_simpleOperations_returnsOperationTokens() {
-        List<Token> tokens = tokenizer.tokenize("sc hdc dc");
+        List<Token> tokens = tokenizer.tokenize("sc hdc inc ch");
         List<String> values = tokens.stream().map(Token::value).collect(Collectors.toList());
         List<TokenType> types = tokens.stream().map(Token::type).collect(Collectors.toList());
 
-        assertEquals(List.of(TokenType.OPERATION, TokenType.OPERATION, TokenType.OPERATION), types);
-        assertEquals(List.of("sc", "hdc", "dc"), values);
+        assertEquals(List.of(TokenType.OPERATION, TokenType.OPERATION, TokenType.OPERATION, TokenType.OPERATION), types);
+        assertEquals(List.of("sc", "hdc", "inc", "ch"), values);
     }
 
     @Test

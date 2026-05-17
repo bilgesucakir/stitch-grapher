@@ -7,7 +7,7 @@ import com.bilgesucakir.stitchgrapher.graph.StitchNode;
 import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.ParsedRow;
-import com.bilgesucakir.stitchgrapher.stitch.*;
+import com.bilgesucakir.stitchgrapher.stitch.StitchFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -18,9 +18,8 @@ import static com.bilgesucakir.stitchgrapher.graph.RowDirection.LEFT_TO_RIGHT;
 import static com.bilgesucakir.stitchgrapher.graph.RowDirection.RIGHT_TO_LEFT;
 
 /**
- * Builds a stitch graph for circular patterns where rows are arranged concentrically.
- * Connections are created such that each row links appropriately to the previous one in
- * a circular fashion.
+ * Builds a stitch graph for flat patterns where rows alternate direction.
+ * Supports increases, decreases, stitches like single, double, etc. and chain stitches.
  */
 @Component
 public class FlatTopologyBuilder implements TopologyBuilder {
@@ -75,26 +74,35 @@ public class FlatTopologyBuilder implements TopologyBuilder {
                     int required = operation.type().getRequiredInput();
                     int produced = operation.type().getProducedOutput();
 
-                    int start = cursor - required;
-                    int end = cursor;
+                    List<StitchNode> parents = List.of();
 
-                    List<StitchNode> parents = previousNodes.subList(start, end);
+                    // Only take parents if something is consumed
+                    if (required > 0) {
+                        int start = cursor - required;
+                        int end = cursor;
+                        parents = previousNodes.subList(start, end);
+                    }
 
                     for (int j = 0; j < produced; j++) {
                         StitchNode child = rowNodes.get(currentIndex++);
 
+                        // Attach parents (no-op for CH)
                         for (StitchNode parent : parents) {
                             parent.addChild(child);
                         }
                     }
 
-                    cursor -= required;
+                    // Only move cursor if consumption happened
+                    if (required > 0) {
+                        cursor -= required;
+                    }
                 }
             }
 
             builtRows.add(row);
             graph.addRow(row);
         }
+
         return graph;
     }
 }

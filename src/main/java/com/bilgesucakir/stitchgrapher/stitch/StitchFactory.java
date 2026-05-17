@@ -22,6 +22,7 @@ public class StitchFactory {
             case HTR -> new HalfTrebleCrochet();
             case TR -> new TrebleCrochet();
             case SLST -> new SlipStitch();
+            case CH -> new Chain();
             default -> throw new IllegalArgumentException("Unsupported operation: " + type);
         };
     }
