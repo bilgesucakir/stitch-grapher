@@ -10,39 +10,60 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 
 ### Core Packages
 
+- **`stitch`** - Stitch abstraction and implementations
+  - `Stitch.java` - Interface for all stitches
+  - `AbstractStitch.java` - Base implementation
+  - `StitchType.java` - Enum for stitch types
+  - `StitchFactory.java` - Factory for mapping operations → stitch instances (supports inc/dec outputs)
+  - Concrete implementations:
+    - `SingleCrochet.java`
+    - `HalfDoubleCrochet.java`
+    - `DoubleCrochet.java`
+    - `HalfTrebleCrochet.java`
+    - `TrebleCrochet.java`
+    - `SlipStitch.java`
+
 - **`parser`** - Pattern parsing pipeline
-  - `PatternTokenizer.java` - Tokenizes raw input 
-  - `PatternExpander.java` - Expands shorthand notations into full operation lists
-  - `PatternParser.java` - Converts tokens into structured parsed model
+  - `PatternParser.java` - Orchestrates tokenize → expand → map to parsed model
   - `ParsedPattern.java`, `ParsedRow.java`, `ParsedOperation.java`
-  - `OperationType.java` - Enum including stitch types and operations (`inc`, `dec`)
+  - `OperationType.java` - Defines required input / produced output for each operation (SC, INC, DEC, etc.)
   - `CrochetMode.java` - Enum for FLAT and CIRCULAR modes
 
+  - **`parser.tokenize`**
+    - `PatternTokenizer.java` - Converts raw string into tokens
+    - `Token.java`
+    - `TokenType.java`
+
+  - **`parser.expand`**
+    - `PatternExpander.java` - Expands repeats and numeric prefixes
+
 - **`validation`** - Pattern validation layer
-  - `PatternValidator.java` - Validator interface
-  - `FlatPatternValidator.java` - Allows unused stitches
-  - `CircularPatternValidator.java` - Requires exact usage 
+  - `PatternValidator.java` - Interface
+  - `FlatPatternValidator.java` - Allows unused stitches between rows
+  - `CircularPatternValidator.java` - Requires exact stitch consumption
   - `ValidationException.java`
+  - `InvalidPatternException.java`
 
-- **`topology`** - Graph construction 
+- **`topology`** - Graph construction
   - `TopologyBuilder.java` - Interface
-  - `FlatTopologyBuilder.java`
-  - `CircularTopologyBuilder.java`
+  - `FlatTopologyBuilder.java` - Reverse mapping (for turning rows)
+  - `CircularTopologyBuilder.java` - Forward mapping (circular continuity)
+  - Handles inc/dec via required/produced stitch logic
 
-- **`service`** - Application layer orchestration
-  - `PatternService.java`
+- **`graph`** - Core graph model
+  - `StitchGraph.java` - Graph container
+  - `StitchNode.java` - Node with parent/child/next/previous relations
+  - `Row.java` - Row abstraction
+  - `RowDirection.java` - LEFT_TO_RIGHT / RIGHT_TO_LEFT
+
+- **`service`** - Application orchestration layer
+  - `PatternService.java` - Interface
   - `FlatPatternService.java`
   - `CircularPatternService.java`
-  - Handles: parse → validate → topology
+  - Flow: **parse → validate → build topology**
 
-- **`mapper`** - DTO conversion
-  - `StitchGraphMapper.java`
-
-- **`graph`** - Graph data structures
-  - `StitchGraph.java`
-  - `StitchNode.java`
-  - `Row.java`
-  - `RowDirection.java`
+- **`mapper`** - DTO conversion layer
+  - `StitchGraphMapper.java` - Converts graph → API DTOs
 
 - **`dto`** - API communication
   - `PatternInputDto.java`
@@ -51,12 +72,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
   - `GraphEdgeDto.java`
 
 - **`controller`** - REST API
-  - `GraphController.java`
-### Core Components
-
-- **`StitchType.java`** - Enumeration defining supported crochet stitch types
-- **`Stitch.java`** - Stitch implementation with properties and methods
-- **`AbstractStitch.java`** - Base abstract class providing common stitch functionality
+  - `GraphController.java` - Entry point (`/api/graph`)
 
 ## Features
 
@@ -77,7 +93,11 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 
 ## A Basic Example
 
-- **Input Pattern**: `3sc, inc sc inc, 2dec sc`
+- **Input Pattern**:
+  - `3sc`
+  - `inc sc inc`
+  - `2dec sc`
+  - `FLAT`
 - **Output**: Sample graph visualization showing stitch connections and hierarchy
 
 ![img.png](img.png)
@@ -85,6 +105,30 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 - So if you have an increase operation, you should have 2 child nodes in the next step. 
 - If you have a decrease operation, you should have 2 parent nodes in the previous step.
 - If you have a normal stitch, you should have 1 parent node in the previous step and 1 child node in the next step.
+
+## More Complex Example
+
+- **Input Pattern**:
+  - `6sc`
+  - `6inc`
+  - `(sc, inc)x6`
+  - `(2sc, inc)x6`
+  - `(3sc, inc)x6`
+  - `30sc`
+  - `30sc`
+  - `30sc`
+  - `(3sc, dec)x6`
+  - `(2sc, dec)x6`
+  - `(sc, dec)x6`
+  - `6dec`
+  - `CIRCULAR`
+- **Output**: Sample graph visualization showing stitch connections and hierarchy
+  - Screenshot from front:<br>![img_1.png](img_1.png)
+  - Screenshot from the top:<br>![img_2.png](img_2.png)
+- Row stitches: 6 → 12 → 18 → 24 → 30 → 30 → 30 → 24 → 18 → 12 → 6
+- The first row produces 6 stitches. The second row has 6 increase operations using row 1 stitches (6x2), resulting in 12 stitches. Row 3 has 6 repetitions of (sc, inc) using row 2 stitches ((1+1)x6), resulting in 18 stitches. Row 4 has 6 repetitions of (2sc, inc) using row 3 stitches ((2+1)x6), resulting in 24 stitches. Row 5 has 6 repetitions of (3sc, inc) using row 4 stitches ((3+1)x6), resulting in 30 stitches. Rows 6-8 have no operations, so they maintain the same stitch count of 30. Row 9 has 6 repetitions of (3sc, dec) using row 8 stitches ((3+1)/2x6), resulting in 24 stitches. Row 10 has 6 repetitions of (2sc, dec) using row 9 stitches ((2+1)/2x6), resulting in 18 stitches. Row 11 has 6 repetitions of (sc, dec) using row 10 stitches ((1+1)/2x6), resulting in 12 stitches. Row 12 has 6 decrease operations using row 11 stitches (12/2), resulting in the final count of 6 stitches.
+- This example demonstrates a more complex pattern with multiple increase and decrease operations, showcasing the stitch connectivity and hierarchy in a circular pattern.
+
 
 
 ## Prerequisites
