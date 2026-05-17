@@ -8,6 +8,11 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Expands patterns by handling groups and numeric prefixes.
+ * For example, it can expand "(sc, dc) x3" into "sc, dc, sc, dc, sc, dc"
+ * and "2sc" into "sc, sc".
+ */
 @Component
 public class PatternExpander {
 

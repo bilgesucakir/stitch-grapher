@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.stream.IntStream;
 
+/**
+ * Main parser that takes a list of pattern rows (strings), tokenizes and expands them,
+ * and produces a structured representation of the pattern as a ParsedPattern object.
+ */
 @Component
 public class PatternParser {
 

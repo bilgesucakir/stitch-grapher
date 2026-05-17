@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * Represents the entire stitch graph, which consists of multiple rows of stitches.
+ * It contains a list of stitch nodes and a list of rows, where each row contains its own list of stitch nodes.
+ */
 @Getter
 public class StitchGraph {
 

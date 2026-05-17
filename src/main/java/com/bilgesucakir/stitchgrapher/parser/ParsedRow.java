@@ -1,7 +1,5 @@
 package com.bilgesucakir.stitchgrapher.parser;
 
-import lombok.Getter;
-
 import java.util.List;
 
 /**
