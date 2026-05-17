@@ -233,5 +233,54 @@ public class CircularTopologyBuilderTest {
         assertThat(nodeRow2.getParents().size()).isEqualTo(1);
         assertThat(nodeRow2.getParents().get(0).equals(nodeRow1)).isTrue();
     }
+
+    @Test
+    void build_chainOperations_buildsCorrectGraphChainsHavingNoParents() {
+
+        ParsedPattern pattern = new ParsedPattern(List.of(
+                new ParsedRow(0, List.of(
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.SC)
+                )),
+                new ParsedRow(1, List.of(
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.SC),
+                        new ParsedOperation(OperationType.CH)
+                ))
+        ));
+
+        StitchGraph graph = assertDoesNotThrow(() -> builder.build(pattern));
+
+        // second row nodes
+        assertNotNull(graph);
+        assertThat(graph.getRows().size()).isEqualTo(2);
+        assertThat(graph.getNodes().size()).isEqualTo(9);
+        assertThat(graph.getNodes().stream().map(StitchNode::getStitch)
+                .filter(stitch -> stitch.getType().equals(StitchType.CH)).count()).isEqualTo(3);
+        assertThat(graph.getNodes().stream().map(StitchNode::getStitch)
+                .filter(stitch -> stitch.getType().equals(StitchType.SC)).count()).isEqualTo(6);
+
+
+        List<StitchNode> row1Nodes = graph.getRows().get(1).getStitches();
+
+        // positions 1, 3, 5 should be CH (since (sc, ch) x3)
+        StitchNode ch1 = row1Nodes.get(1);
+        StitchNode ch2 = row1Nodes.get(3);
+        StitchNode ch3 = row1Nodes.get(5);
+
+        // sanity: ensure they are actually CH
+        assertEquals(StitchType.CH, ch1.getStitch().getType());
+        assertEquals(StitchType.CH, ch2.getStitch().getType());
+        assertEquals(StitchType.CH, ch3.getStitch().getType());
+
+        // core assertion: chain stitches must have NO parents
+        assertThat(ch1.getParents()).isEmpty();
+        assertThat(ch2.getParents()).isEmpty();
+        assertThat(ch3.getParents()).isEmpty();
+    }
 }
 

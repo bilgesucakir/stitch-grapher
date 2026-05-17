@@ -57,10 +57,14 @@ class FlatPatternValidatorTest {
         ));
 
         // row2: 3sc → RR=3 (exactly matches previous output → valid)
+        //ch consumes no parent
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC)
+                new ParsedOperation(OperationType.SC),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
         ));
 
         ParsedPattern pattern =

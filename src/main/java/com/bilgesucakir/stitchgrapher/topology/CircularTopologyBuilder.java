@@ -6,7 +6,7 @@ import com.bilgesucakir.stitchgrapher.graph.StitchNode;
 import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.ParsedRow;
-import com.bilgesucakir.stitchgrapher.stitch.*;
+import com.bilgesucakir.stitchgrapher.stitch.StitchFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,8 +17,7 @@ import static com.bilgesucakir.stitchgrapher.graph.RowDirection.LEFT_TO_RIGHT;
 
 /**
  * Builds a stitch graph for circular patterns where rows are arranged concentrically.
- * Connections are created such that each row links appropriately to the previous one in
- * a circular fashion.
+ * Supports increases, decreases, stitches like single, double, etc. and chain stitches.
  */
 @Component
 public class CircularTopologyBuilder implements TopologyBuilder {
@@ -60,7 +59,7 @@ public class CircularTopologyBuilder implements TopologyBuilder {
                 Row previousRow = builtRows.get(builtRows.size() - 1);
                 List<StitchNode> previousNodes = previousRow.getStitches();
 
-                // keep your original circular continuity
+                // circular continuity (last → first)
                 previousNodes.get(previousNodes.size() - 1).connectNext(rowNodes.get(0));
 
                 int cursor = 0;
@@ -71,8 +70,12 @@ public class CircularTopologyBuilder implements TopologyBuilder {
                     int required = operation.type().getRequiredInput();
                     int produced = operation.type().getProducedOutput();
 
-                    // forward consumption
-                    List<StitchNode> parents = previousNodes.subList(cursor, cursor + required);
+                    List<StitchNode> parents = List.of();
+
+                    // Only assign parents if something is consumed
+                    if (required > 0) {
+                        parents = previousNodes.subList(cursor, cursor + required);
+                    }
 
                     for (int j = 0; j < produced; j++) {
                         StitchNode child = rowNodes.get(currentIndex++);
@@ -81,14 +84,16 @@ public class CircularTopologyBuilder implements TopologyBuilder {
                             parent.addChild(child);
                         }
                     }
-                    cursor += required;
+
+                    // Only move cursor if something was consumed
+                    if (required > 0) {
+                        cursor += required;
+                    }
                 }
             }
-
             builtRows.add(row);
             graph.addRow(row);
         }
-
         return graph;
     }
 }

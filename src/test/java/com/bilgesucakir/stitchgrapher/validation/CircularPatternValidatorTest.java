@@ -33,10 +33,14 @@ class CircularPatternValidatorTest {
         ));
 
         // row2: 3sc → RR=3 (exact match)
+        // ch consumes no parent
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC)
+                new ParsedOperation(OperationType.SC),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
         ));
 
         ParsedPattern pattern =
