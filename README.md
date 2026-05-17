@@ -6,66 +6,6 @@ Java-based stitch connectivity graph engine for topology-aware crochet pattern p
 
 Stitch-grapher is a Spring Boot application that processes crochet patterns in text format and visualizes them as connectivity graphs. It models crochet stitches as a hierarchical abstraction layer, enabling complex pattern analysis and visualization.
 
-## Project Structure
-
-### `controller`
-- Handles incoming HTTP requests.
-- `GraphController.java`  
-  - Exposes the `/api/graph` endpoint.  
-  - Delegates work to the appropriate service (flat or circular) and returns the result as a DTO.
-### `dto`
-- Defines API request and response models.
-- `PatternInputDto` → input from client (rows + crochet mode)
-- `StitchGraphDto` → response (nodes + edges)
-- `GraphNodeDto`, `GraphEdgeDto` → frontend-friendly graph format
-### `exception`
-- Custom exceptions used across parsing and validation.
-- `ParseException` → invalid syntax during tokenization/parsing
-- `ValidationException` → invalid stitch logic between rows
-- `InvalidPatternException` → base exception type for pattern errors
-### `graph`
-- Core domain model representing the stitch graph.
-- `StitchGraph` → container for all rows and nodes
-- `StitchNode` → graph node (has next, previous, parents, children)
-- `Row` → group of stitches with index and direction
-- `RowDirection` → LEFT_TO_RIGHT / RIGHT_TO_LEFT
-### `mapper`
-- Transforms internal models into API responses.
-- `StitchGraphMapper` → converts `StitchGraph` → `StitchGraphDto`
-### `parser`
-- Responsible for converting text input into structured data.
-- `PatternParser` → orchestrates parsing pipeline
-- `OperationType` → defines stitch behavior (input/output counts)
-- `ParsedPattern`, `ParsedRow`, `ParsedOperation` → structured representation
-- `CrochetMode` → FLAT / CIRCULAR
-  #### `parser.tokenize`
-  - Breaks raw text into tokens.
-  - `PatternTokenizer`, `Token`, `TokenType`
-  #### `parser.expand`
-  - Expands shorthand syntax.
-  - `PatternExpander` → handles repeats and numeric prefixes
-### `service`
-- Orchestrates the main workflow. (parse → validate → build topology)
-- `PatternService` → interface
-- `FlatPatternService`, `CircularPatternService` → implementations
-### `stitch`
-- Represents stitch types and creation logic.
-- Base: `Stitch`, `AbstractStitch`
-- Concrete stitches: `SingleCrochet`, `DoubleCrochet`, etc.
-- `StitchType` → enum
-- `StitchFactory` → creates stitch instances from operations
-### `topology`
-- Builds the graph structure from parsed data.
-- Handles how stitches connect (including increases and decreases).
-- `TopologyBuilder` → interface
-- `FlatTopologyBuilder` → alternating rows + reverse parent mapping
-- `CircularTopologyBuilder` → circular structure + forward mapping
-### `validation`
-- Ensures pattern correctness before graph construction.
-- `PatternValidator` → interface
-- `FlatPatternValidator` → allows unused stitches
-- `CircularPatternValidator` → requires exact stitch matching
-
 ## Features
 
 ### Currently Implemented
@@ -122,8 +62,6 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 - Row stitches: 6 → 12 → 18 → 24 → 30 → 30 → 30 → 24 → 18 → 12 → 6
 - The first row produces 6 stitches. The second row has 6 increase operations using row 1 stitches (6x2), resulting in 12 stitches. Row 3 has 6 repetitions of (sc, inc) using row 2 stitches ((1+1)x6), resulting in 18 stitches. Row 4 has 6 repetitions of (2sc, inc) using row 3 stitches ((2+1)x6), resulting in 24 stitches. Row 5 has 6 repetitions of (3sc, inc) using row 4 stitches ((3+1)x6), resulting in 30 stitches. Rows 6-8 have no operations, so they maintain the same stitch count of 30. Row 9 has 6 repetitions of (3sc, dec) using row 8 stitches ((3+1)/2x6), resulting in 24 stitches. Row 10 has 6 repetitions of (2sc, dec) using row 9 stitches ((2+1)/2x6), resulting in 18 stitches. Row 11 has 6 repetitions of (sc, dec) using row 10 stitches ((1+1)/2x6), resulting in 12 stitches. Row 12 has 6 decrease operations using row 11 stitches (12/2), resulting in the final count of 6 stitches.
 - This example demonstrates a more complex pattern with multiple increase and decrease operations, showcasing the stitch connectivity and hierarchy in a circular pattern.
-
-
 
 ## Prerequisites
 
