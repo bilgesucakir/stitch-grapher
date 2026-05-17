@@ -7,30 +7,22 @@ import com.bilgesucakir.stitchgrapher.parser.OperationType;
 import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.ParsedRow;
+import com.bilgesucakir.stitchgrapher.stitch.StitchFactory;
 import com.bilgesucakir.stitchgrapher.stitch.StitchType;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Test scaffold for FlatTopologyBuilder.
- */
-
-@ExtendWith(MockitoExtension.class)
 public class FlatTopologyBuilderTest {
 
-    @InjectMocks
-    private FlatTopologyBuilder builder;
+    private final StitchFactory stitchFactory = new StitchFactory();
+    private final FlatTopologyBuilder builder = new FlatTopologyBuilder(stitchFactory);
 
     @Test
     void build_oneRow_buildsCorrectTopology() {
-
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
                         new ParsedOperation(OperationType.SC),
@@ -316,4 +308,3 @@ public class FlatTopologyBuilderTest {
         assertThat(nodeRow2.getParents().get(0).equals(nodeRow1)).isTrue();
     }
 }
-
