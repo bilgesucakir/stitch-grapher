@@ -13,7 +13,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 - Support common pattern syntax
   - Repeats like `(sc, inc)x6`, numeric prefixes like `3sc`
 - Validate patterns for correctness
-- Support increase (`inc`) and decrease (`dec`) operations
+- Support increase (`inc`), decrease (`dec`), chain (`ch`) operations
 - Model stitch relationships as a graph 
   - How stitches connect to each other
 - Visualize patterns:
