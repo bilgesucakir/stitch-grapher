@@ -15,6 +15,11 @@ import java.util.List;
 
 import static com.bilgesucakir.stitchgrapher.graph.RowDirection.LEFT_TO_RIGHT;
 
+/**
+ * Builds a stitch graph for circular patterns where rows are arranged concentrically.
+ * Connections are created such that each row links appropriately to the previous one in
+ * a circular fashion.
+ */
 @Component
 public class CircularTopologyBuilder implements TopologyBuilder {
 

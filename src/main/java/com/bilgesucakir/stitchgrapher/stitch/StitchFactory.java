@@ -3,6 +3,11 @@ package com.bilgesucakir.stitchgrapher.stitch;
 import com.bilgesucakir.stitchgrapher.parser.OperationType;
 import org.springframework.stereotype.Component;
 
+/**
+ * Factory class for creating Stitch instances based on the OperationType.
+ * This class abstracts the instantiation logic for different stitch types,
+ * allowing for easy extension and maintenance.
+ */
 @Component
 public class StitchFactory {
 

@@ -6,6 +6,10 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Tokenizer for parsing crochet pattern strings into a list of tokens.
+ * It recognizes numbers, operations, repeat counts, and special symbols like parentheses and commas.
+ */
 @Component
 public class PatternTokenizer {
 

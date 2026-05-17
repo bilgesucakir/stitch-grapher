@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Represents a node in the stitch graph, which corresponds to a single stitch in the crocheting pattern.
+ * Each node has a unique ID, a reference to the stitch it represents, and connections to previous and next nodes,
+ * as well as parent and child nodes for branching patterns.
+ */
 @Getter
 public class StitchNode {
 
