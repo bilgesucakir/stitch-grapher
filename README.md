@@ -9,20 +9,22 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 ## Features
 
 ### Currently Implemented
-- Parse text-based crochet patterns into a structured model
-- Tokenization and expansion of pattern syntax (e.g. repeats, numeric prefixes)
-- Input validation for pattern correctness (flat and circular modes)
-- Formal stitch topology modeling using required/produced stitch semantics (RR/RO)
-- Support for increase and decrease operations (`inc`, `dec`)
-- Model stitch connectivity as a graph (parent/child + next/previous relationships)
-- Generate graph visualizations with row-aware positioning (2D flat + 3D circular)
-- Support for multiple stitch types (SC, HDC, DC, HTR, TR, SLST)
-- Directional row support for flat patterns (LEFT_TO_RIGHT / RIGHT_TO_LEFT)
-- REST API endpoint for graph generation
-- Comprehensive unit tests for parsing, validation, and topology building
+- Parse text-based crochet patterns into a structured format
+- Support common pattern syntax
+  - Repeats like `(sc, inc)x6`, numeric prefixes like `3sc`
+- Validate patterns for correctness
+- Support increase (`inc`) and decrease (`dec`) operations
+- Model stitch relationships as a graph 
+  - How stitches connect to each other
+- Visualize patterns:
+  - 2D layout for flat crochet
+  - 3D circular layout for amigurumi-style patterns
+- Support multiple stitch types (SC, HDC, DC, HTR, TR, SLST)
+- Handle row direction for flat patterns
+- Expose a REST API to generate graphs from patterns
 
 ### To Be Implemented
-- Better visualization of stitch connections and hierarchy for flat and circular patterns
+- Better visualization of 3d circular patterns and 2d flat patterns
 - Turn, chain, magic ring, fasten off operations
 
 ## A Basic Example
@@ -60,8 +62,6 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
   - Screenshot from front:<br>![img_1.png](img_1.png)
   - Screenshot from the top:<br>![img_2.png](img_2.png)
 - Row stitches: 6 → 12 → 18 → 24 → 30 → 30 → 30 → 24 → 18 → 12 → 6
-- The first row produces 6 stitches. The second row has 6 increase operations using row 1 stitches (6x2), resulting in 12 stitches. Row 3 has 6 repetitions of (sc, inc) using row 2 stitches ((1+1)x6), resulting in 18 stitches. Row 4 has 6 repetitions of (2sc, inc) using row 3 stitches ((2+1)x6), resulting in 24 stitches. Row 5 has 6 repetitions of (3sc, inc) using row 4 stitches ((3+1)x6), resulting in 30 stitches. Rows 6-8 have no operations, so they maintain the same stitch count of 30. Row 9 has 6 repetitions of (3sc, dec) using row 8 stitches ((3+1)/2x6), resulting in 24 stitches. Row 10 has 6 repetitions of (2sc, dec) using row 9 stitches ((2+1)/2x6), resulting in 18 stitches. Row 11 has 6 repetitions of (sc, dec) using row 10 stitches ((1+1)/2x6), resulting in 12 stitches. Row 12 has 6 decrease operations using row 11 stitches (12/2), resulting in the final count of 6 stitches.
-- This example demonstrates a more complex pattern with multiple increase and decrease operations, showcasing the stitch connectivity and hierarchy in a circular pattern.
 
 ## Prerequisites
 
