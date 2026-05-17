@@ -8,88 +8,82 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 
 ## Project Structure
 
-### Core Packages
-
-- **`stitch`** - Stitch abstraction and implementations
-  - `Stitch.java` - Interface for all stitches
-  - `AbstractStitch.java` - Base implementation
-  - `StitchType.java` - Enum for stitch types
-  - `StitchFactory.java` - Factory for mapping operations → stitch instances (supports inc/dec outputs)
-  - Concrete implementations:
-    - `SingleCrochet.java`
-    - `HalfDoubleCrochet.java`
-    - `DoubleCrochet.java`
-    - `HalfTrebleCrochet.java`
-    - `TrebleCrochet.java`
-    - `SlipStitch.java`
-
-- **`parser`** - Pattern parsing pipeline
-  - `PatternParser.java` - Orchestrates tokenize → expand → map to parsed model
-  - `ParsedPattern.java`, `ParsedRow.java`, `ParsedOperation.java`
-  - `OperationType.java` - Defines required input / produced output for each operation (SC, INC, DEC, etc.)
-  - `CrochetMode.java` - Enum for FLAT and CIRCULAR modes
-
-  - **`parser.tokenize`**
-    - `PatternTokenizer.java` - Converts raw string into tokens
-    - `Token.java`
-    - `TokenType.java`
-
-  - **`parser.expand`**
-    - `PatternExpander.java` - Expands repeats and numeric prefixes
-
-- **`validation`** - Pattern validation layer
-  - `PatternValidator.java` - Interface
-  - `FlatPatternValidator.java` - Allows unused stitches between rows
-  - `CircularPatternValidator.java` - Requires exact stitch consumption
-  - `ValidationException.java`
-  - `InvalidPatternException.java`
-
-- **`topology`** - Graph construction
-  - `TopologyBuilder.java` - Interface
-  - `FlatTopologyBuilder.java` - Reverse mapping (for turning rows)
-  - `CircularTopologyBuilder.java` - Forward mapping (circular continuity)
-  - Handles inc/dec via required/produced stitch logic
-
-- **`graph`** - Core graph model
-  - `StitchGraph.java` - Graph container
-  - `StitchNode.java` - Node with parent/child/next/previous relations
-  - `Row.java` - Row abstraction
-  - `RowDirection.java` - LEFT_TO_RIGHT / RIGHT_TO_LEFT
-
-- **`service`** - Application orchestration layer
-  - `PatternService.java` - Interface
-  - `FlatPatternService.java`
-  - `CircularPatternService.java`
-  - Flow: **parse → validate → build topology**
-
-- **`mapper`** - DTO conversion layer
-  - `StitchGraphMapper.java` - Converts graph → API DTOs
-
-- **`dto`** - API communication
-  - `PatternInputDto.java`
-  - `StitchGraphDto.java`
-  - `GraphNodeDto.java`
-  - `GraphEdgeDto.java`
-
-- **`controller`** - REST API
-  - `GraphController.java` - Entry point (`/api/graph`)
+### `controller`
+- Handles incoming HTTP requests.
+- `GraphController.java`  
+  - Exposes the `/api/graph` endpoint.  
+  - Delegates work to the appropriate service (flat or circular) and returns the result as a DTO.
+### `dto`
+- Defines API request and response models.
+- `PatternInputDto` → input from client (rows + crochet mode)
+- `StitchGraphDto` → response (nodes + edges)
+- `GraphNodeDto`, `GraphEdgeDto` → frontend-friendly graph format
+### `exception`
+- Custom exceptions used across parsing and validation.
+- `ParseException` → invalid syntax during tokenization/parsing
+- `ValidationException` → invalid stitch logic between rows
+- `InvalidPatternException` → base exception type for pattern errors
+### `graph`
+- Core domain model representing the stitch graph.
+- `StitchGraph` → container for all rows and nodes
+- `StitchNode` → graph node (has next, previous, parents, children)
+- `Row` → group of stitches with index and direction
+- `RowDirection` → LEFT_TO_RIGHT / RIGHT_TO_LEFT
+### `mapper`
+- Transforms internal models into API responses.
+- `StitchGraphMapper` → converts `StitchGraph` → `StitchGraphDto`
+### `parser`
+- Responsible for converting text input into structured data.
+- `PatternParser` → orchestrates parsing pipeline
+- `OperationType` → defines stitch behavior (input/output counts)
+- `ParsedPattern`, `ParsedRow`, `ParsedOperation` → structured representation
+- `CrochetMode` → FLAT / CIRCULAR
+  #### `parser.tokenize`
+  - Breaks raw text into tokens.
+  - `PatternTokenizer`, `Token`, `TokenType`
+  #### `parser.expand`
+  - Expands shorthand syntax.
+  - `PatternExpander` → handles repeats and numeric prefixes
+### `service`
+- Orchestrates the main workflow. (parse → validate → build topology)
+- `PatternService` → interface
+- `FlatPatternService`, `CircularPatternService` → implementations
+### `stitch`
+- Represents stitch types and creation logic.
+- Base: `Stitch`, `AbstractStitch`
+- Concrete stitches: `SingleCrochet`, `DoubleCrochet`, etc.
+- `StitchType` → enum
+- `StitchFactory` → creates stitch instances from operations
+### `topology`
+- Builds the graph structure from parsed data.
+- Handles how stitches connect (including increases and decreases).
+- `TopologyBuilder` → interface
+- `FlatTopologyBuilder` → alternating rows + reverse parent mapping
+- `CircularTopologyBuilder` → circular structure + forward mapping
+### `validation`
+- Ensures pattern correctness before graph construction.
+- `PatternValidator` → interface
+- `FlatPatternValidator` → allows unused stitches
+- `CircularPatternValidator` → requires exact stitch matching
 
 ## Features
 
 ### Currently Implemented
-- Parse text-based crochet patterns (
-- Input validation for pattern syntax and operations
-- Model stitch connectivity and topology
-- Generate graph visualizations with row-aware positioning
-- Support for multiple stitch types 
-- Directional row support 
+Parse text-based crochet patterns into a structured model
+- Tokenization and expansion of pattern syntax (e.g. repeats, numeric prefixes)
+- Input validation for pattern correctness (flat and circular modes)
+- Formal stitch topology modeling using required/produced stitch semantics (RR/RO)
+- Support for increase and decrease operations (`inc`, `dec`)
+- Model stitch connectivity as a graph (parent/child + next/previous relationships)
+- Generate graph visualizations with row-aware positioning (2D flat + 3D circular)
+- Support for multiple stitch types (SC, HDC, DC, HTR, TR, SLST)
+- Directional row support for flat patterns (LEFT_TO_RIGHT / RIGHT_TO_LEFT)
 - REST API endpoint for graph generation
+- Comprehensive unit tests for parsing, validation, and topology building
 
 ### To Be Implemented
-- Pattern input validation for edge cases and complex patterns
-- Increase operations (inc) - stitch multiplication
-- Decrease operations (dec) - stitch reduction
 - Better visualization of stitch connections and hierarchy for flat and circular patterns
+- Turn, chain, magic ring, fasten off operations
 
 ## A Basic Example
 
