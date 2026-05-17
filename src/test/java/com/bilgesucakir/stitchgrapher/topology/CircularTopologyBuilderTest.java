@@ -7,9 +7,9 @@ import com.bilgesucakir.stitchgrapher.parser.OperationType;
 import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.ParsedRow;
+import com.bilgesucakir.stitchgrapher.stitch.StitchFactory;
 import com.bilgesucakir.stitchgrapher.stitch.StitchType;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 
 import java.util.List;
 
@@ -17,13 +17,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Test scaffold for CircularTopologyBuilder.
- */
 public class CircularTopologyBuilderTest {
 
-    @InjectMocks
-    private CircularTopologyBuilder builder = new CircularTopologyBuilder();
+    private final StitchFactory stitchFactory = new StitchFactory();
+    private final CircularTopologyBuilder builder = new CircularTopologyBuilder(stitchFactory);
 
     @Test
     void build_oneRow_buildsCorrectTopology() {

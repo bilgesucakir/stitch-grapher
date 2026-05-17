@@ -1,8 +1,6 @@
-import * as THREE
-from 'three';
+import * as THREE from 'three';
 
-import { OrbitControls }
-from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
 let rowCounter = 0;
 addRow();
@@ -12,12 +10,37 @@ document.getElementById('generate-graph-btn').addEventListener('click', generate
 
 function addRow() {
   const container = document.getElementById('rows-container');
+
+  const rowWrapper = document.createElement('div');
+  rowWrapper.className = 'row-item';
+
   const input = document.createElement('input');
   input.type = 'text';
   input.className = 'row-input';
   input.placeholder = `Row ${rowCounter + 1}`;
-  container.appendChild(input);
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = '❌';
+  deleteBtn.className = 'delete-row-btn';
+
+  deleteBtn.addEventListener('click', () => {
+    rowWrapper.remove();
+    updateRowPlaceholders();
+  });
+
+  rowWrapper.appendChild(input);
+  rowWrapper.appendChild(deleteBtn);
+  container.appendChild(rowWrapper);
+
   rowCounter++;
+}
+
+function updateRowPlaceholders() {
+  const inputs = document.querySelectorAll('.row-input');
+  inputs.forEach((input, index) => {
+    input.placeholder = `Row ${index + 1}`;
+  });
+  rowCounter = inputs.length;
 }
 
 function generateGraph() {
@@ -25,12 +48,19 @@ function generateGraph() {
   const rows = [];
   rowInputs.forEach(input => rows.push(input.value));
   const mode = document.getElementById('crochet-mode').value;
+
   fetch('/api/graph', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ rows: rows, mode: mode })
   })
-    .then(response => response.json())
+    .then(async response => {
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text);
+      }
+      return response.json();
+    })
     .then(data => {
       if (mode === 'CIRCULAR') {
         renderCircularGraph3D(data);
@@ -40,6 +70,7 @@ function generateGraph() {
     })
     .catch(err => {
       console.error('Failed to generate graph', err);
+      alert(err.message);
     });
 }
 
@@ -51,28 +82,57 @@ function renderFlatGraph(data) {
   const rowSpacing = 140;
   const rowLengths = {};
 
-  data.nodes.forEach(node => { rowLengths[node.row] = (rowLengths[node.row] || 0) + 1; });
+  data.nodes.forEach(node => {
+    rowLengths[node.row] = (rowLengths[node.row] || 0) + 1;
+  });
+
   const maxRowLength = Math.max(...Object.values(rowLengths));
   const maxRow = Math.max(...data.nodes.map(node => node.row));
 
   data.nodes.forEach(node => {
-    const visualPosition = node.direction === 'LEFT_TO_RIGHT' ? node.position : rowLengths[node.row] - node.position - 1;
-    const rowStartX = offsetX + ((maxRowLength - rowLengths[node.row]) * spacing) / 2;
+    const visualPosition =
+      node.direction === 'LEFT_TO_RIGHT'
+        ? node.position
+        : rowLengths[node.row] - node.position - 1;
+
+    const rowStartX =
+      offsetX + ((maxRowLength - rowLengths[node.row]) * spacing) / 2;
+
     const x = rowStartX + visualPosition * spacing;
     const y = (maxRow - node.row) * rowSpacing + offsetY;
-    elements.push({ data: { id: node.id, label: node.label }, position: { x: x, y: y } });
+
+    elements.push({
+      data: { id: node.id, label: node.label },
+      position: { x: x, y: y }
+    });
   });
 
-  data.edges.forEach(edge => elements.push({ data: { source: edge.source, target: edge.target } }));
+  data.edges.forEach(edge =>
+    elements.push({ data: { source: edge.source, target: edge.target } })
+  );
 
   const container = document.getElementById('cy');
   container.innerHTML = '';
+
   cytoscape({
     container: container,
     elements: elements,
     style: [
-      { selector: 'node', style: { label: 'data(label)', 'text-valign': 'center', 'text-halign': 'center' } },
-      { selector: 'edge', style: { 'curve-style': 'bezier', 'target-arrow-shape': 'triangle' } }
+      {
+        selector: 'node',
+        style: {
+          label: 'data(label)',
+          'text-valign': 'center',
+          'text-halign': 'center'
+        }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'curve-style': 'bezier',
+          'target-arrow-shape': 'triangle'
+        }
+      }
     ],
     layout: { name: 'preset' }
   });
@@ -85,7 +145,13 @@ function renderCircularGraph3D(data) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
 
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    5000
+  );
+
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, 900);
   container.appendChild(renderer.domElement);
@@ -97,33 +163,74 @@ function renderCircularGraph3D(data) {
 
   const nodeMap = {};
   const rowLengths = {};
-  data.nodes.forEach(node => { rowLengths[node.row] = (rowLengths[node.row] || 0) + 1; });
-
-  const cylinderRadius = 250;
-  const rowHeight = 120;
 
   data.nodes.forEach(node => {
+    rowLengths[node.row] = (rowLengths[node.row] || 0) + 1;
+  });
+
+  const baseRadius = 40;
+  const radiusScale = 12;
+
+  // --- Compute dynamic row heights ---
+  const rowHeights = {};
+  let currentY = 0;
+
+  Object.keys(rowLengths)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .forEach(row => {
+      const stitchCount = rowLengths[row];
+
+      // smoother growth (more natural)
+      const radius = baseRadius + Math.sqrt(stitchCount) * radiusScale * 3;
+
+      const dynamicHeight = 40 + radius * 0.2;
+
+      rowHeights[row] = currentY;
+      currentY += dynamicHeight;
+    });
+
+  // center vertically
+  const maxY = Math.max(...Object.values(rowHeights));
+  const minY = Math.min(...Object.values(rowHeights));
+  const centerOffset = (maxY + minY) / 2;
+
+  // --- Create nodes ---
+  data.nodes.forEach(node => {
     const stitchCount = rowLengths[node.row];
+
+    const radius = baseRadius + Math.sqrt(stitchCount) * radiusScale * 3;
+
     const angle = (2 * Math.PI * node.position) / stitchCount;
-    const x = cylinderRadius * Math.cos(angle);
-    const z = cylinderRadius * Math.sin(angle);
-    const y = node.row * rowHeight;
+
+    const x = radius * Math.cos(angle);
+    const z = radius * Math.sin(angle);
+    const y = rowHeights[node.row] - centerOffset;
 
     const geometry = new THREE.SphereGeometry(18, 32, 32);
     const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
     const sphere = new THREE.Mesh(geometry, material);
+
     sphere.position.set(x, y, z);
     scene.add(sphere);
+
     nodeMap[node.id] = { x, y, z };
   });
 
+  // --- Create edges ---
   data.edges.forEach(edge => {
     const source = nodeMap[edge.source];
     const target = nodeMap[edge.target];
     if (!source || !target) return;
-    const points = [new THREE.Vector3(source.x, source.y, source.z), new THREE.Vector3(target.x, target.y, target.z)];
+
+    const points = [
+      new THREE.Vector3(source.x, source.y, source.z),
+      new THREE.Vector3(target.x, target.y, target.z)
+    ];
+
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+
     const line = new THREE.Line(geometry, material);
     scene.add(line);
   });
