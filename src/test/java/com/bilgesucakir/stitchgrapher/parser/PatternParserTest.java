@@ -45,12 +45,12 @@ public class PatternParserTest {
 
         ParsedPattern parsed = parser.parse(List.of(row));
 
-        assertEquals(1, parsed.getRows().size());
-        ParsedRow parsedRow = parsed.getRows().get(0);
-        assertEquals(0, parsedRow.getIndex());
-        assertEquals(2, parsedRow.getOperations().size());
-        assertEquals(OperationType.SC, parsedRow.getOperations().get(0).getType());
-        assertEquals(OperationType.HDC, parsedRow.getOperations().get(1).getType());
+        assertEquals(1, parsed.rows().size());
+        ParsedRow parsedRow = parsed.rows().get(0);
+        assertEquals(0, parsedRow.index());
+        assertEquals(2, parsedRow.operations().size());
+        assertEquals(OperationType.SC, parsedRow.operations().get(0).type());
+        assertEquals(OperationType.HDC, parsedRow.operations().get(1).type());
     }
 
     @Test
@@ -70,12 +70,12 @@ public class PatternParserTest {
 
         ParsedPattern parsed = parser.parse(List.of(row1, row2));
 
-        assertEquals(2, parsed.getRows().size());
-        assertEquals(0, parsed.getRows().get(0).getIndex());
-        assertEquals(1, parsed.getRows().get(1).getIndex());
-        assertEquals(OperationType.SC, parsed.getRows().get(0).getOperations().get(0).getType());
-        assertEquals(OperationType.HDC, parsed.getRows().get(0).getOperations().get(1).getType());
-        assertEquals(OperationType.DC, parsed.getRows().get(1).getOperations().get(0).getType());
+        assertEquals(2, parsed.rows().size());
+        assertEquals(0, parsed.rows().get(0).index());
+        assertEquals(1, parsed.rows().get(1).index());
+        assertEquals(OperationType.SC, parsed.rows().get(0).operations().get(0).type());
+        assertEquals(OperationType.HDC, parsed.rows().get(0).operations().get(1).type());
+        assertEquals(OperationType.DC, parsed.rows().get(1).operations().get(0).type());
     }
 
     @Test
@@ -90,10 +90,10 @@ public class PatternParserTest {
 
         ParsedPattern parsed = parser.parse(List.of(r0, r1, r2));
 
-        assertEquals(2, parsed.getRows().size());
+        assertEquals(2, parsed.rows().size());
         // first parsed row should have original index 0, second parsed row index 2
-        assertEquals(0, parsed.getRows().get(0).getIndex());
-        assertEquals(2, parsed.getRows().get(1).getIndex());
+        assertEquals(0, parsed.rows().get(0).index());
+        assertEquals(2, parsed.rows().get(1).index());
     }
 
     @Test

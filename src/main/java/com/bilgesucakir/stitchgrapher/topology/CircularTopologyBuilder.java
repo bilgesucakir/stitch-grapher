@@ -29,12 +29,12 @@ public class CircularTopologyBuilder implements  TopologyBuilder {
         StitchGraph graph = new StitchGraph();
         List<Row> builtRows = new ArrayList<>();
 
-        for (ParsedRow parsedRow : pattern.getRows()) {
-            Row row = new Row(parsedRow.getIndex(), LEFT_TO_RIGHT);
+        for (ParsedRow parsedRow : pattern.rows()) {
+            Row row = new Row(parsedRow.index(), LEFT_TO_RIGHT);
 
             List<StitchNode> rowNodes = new ArrayList<>();
-            for (ParsedOperation operation : parsedRow.getOperations()) {
-                StitchNode node = new StitchNode(createStitch(operation.getType()));
+            for (ParsedOperation operation : parsedRow.operations()) {
+                StitchNode node = new StitchNode(createStitch(operation.type()));
                 row.addStitch(node);
                 rowNodes.add(node);
             }

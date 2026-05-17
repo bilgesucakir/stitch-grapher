@@ -18,18 +18,18 @@ public class CircularPatternValidator implements PatternValidator {
 
         Integer previousOutput = null;
 
-        for (ParsedRow row : pattern.getRows()) {
+        for (ParsedRow row : pattern.rows()) {
 
             int rr = 0;
             int ro = 0;
 
-            for (ParsedOperation op : row.getOperations()) {
-                rr += op.getType().getRequiredInput();
-                ro += op.getType().getProducedOutput();
+            for (ParsedOperation op : row.operations()) {
+                rr += op.type().getRequiredInput();
+                ro += op.type().getProducedOutput();
             }
 
             if (previousOutput != null && rr != previousOutput) {
-                int rowNum = row.getIndex() + 1;
+                int rowNum = row.index() + 1;
                 throw new ValidationException(
                         "Row " + rowNum +
                                 " must consume exactly " + previousOutput +

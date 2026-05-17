@@ -31,13 +31,13 @@ public class FlatTopologyBuilder implements TopologyBuilder{
         StitchGraph graph = new StitchGraph();
         List<Row> builtRows = new ArrayList<>();
 
-        for (ParsedRow parsedRow : pattern.getRows()) {
-            RowDirection direction = parsedRow.getIndex() % 2 == 0 ? LEFT_TO_RIGHT : RIGHT_TO_LEFT;
-            Row row = new Row(parsedRow.getIndex(), direction);
+        for (ParsedRow parsedRow : pattern.rows()) {
+            RowDirection direction = parsedRow.index() % 2 == 0 ? LEFT_TO_RIGHT : RIGHT_TO_LEFT;
+            Row row = new Row(parsedRow.index(), direction);
 
             List<StitchNode> rowNodes = new ArrayList<>();
-            for (ParsedOperation operation : parsedRow.getOperations()) {
-                StitchNode node = new StitchNode(createStitch(operation.getType()));
+            for (ParsedOperation operation : parsedRow.operations()) {
+                StitchNode node = new StitchNode(createStitch(operation.type()));
                 row.addStitch(node);
                 rowNodes.add(node);
             }
@@ -50,7 +50,6 @@ public class FlatTopologyBuilder implements TopologyBuilder{
                 Row previousRow = builtRows.get(builtRows.size() - 1);
                 List<StitchNode> previousNodes = previousRow.getStitches();
 
-                //TODO: current row's stitch requirement validator needed
                 for (int i = 0; i < rowNodes.size(); i++) {
 
                     StitchNode parent = previousNodes.get(previousNodes.size() - 1 - i);

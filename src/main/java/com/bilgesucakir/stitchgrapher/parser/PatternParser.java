@@ -2,19 +2,13 @@ package com.bilgesucakir.stitchgrapher.parser;
 
 import com.bilgesucakir.stitchgrapher.parser.expand.PatternExpander;
 import com.bilgesucakir.stitchgrapher.parser.tokenize.PatternTokenizer;
+import com.bilgesucakir.stitchgrapher.parser.tokenize.Token;
 import com.bilgesucakir.stitchgrapher.parser.tokenize.TokenType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * Parses a list of stitch pattern rows into a {@link ParsedPattern} consisting of {@link ParsedRow}s.
- * For each non-empty input row the parser tokenizes, expands shorthands and converts operation tokens
- * into ParsedOperation objects while preserving the original row index.
- */
 @Component
 public class PatternParser {
 
@@ -27,26 +21,31 @@ public class PatternParser {
     }
 
     public ParsedPattern parse(List<String> rows) {
+
+        if (rows == null) {
+            return new ParsedPattern(List.of());
+        }
+
         List<ParsedRow> parsedRows = IntStream.range(0, rows.size())
-            .mapToObj(i -> {
-                String row = rows.get(i).trim();
-                if (row.isEmpty()) {
-                    return null;
-                }
+                .filter(i -> !rows.get(i).trim().isEmpty())
+                .mapToObj(i -> {
+                    String row = rows.get(i).trim();
 
-                // tokenize -> expand -> filter operation tokens -> map to ParsedOperation
-                List<ParsedOperation> operations = expander
-                    .expand(tokenizer.tokenize(row))
-                    .stream()
-                    .filter(t -> t.type() == TokenType.OPERATION)
-                    .map(t -> new ParsedOperation(OperationType.from(t.value())))
-                    .collect(Collectors.toList());
+                    List<ParsedOperation> operations = expander
+                            .expand(tokenizer.tokenize(row))
+                            .stream()
+                            .filter(t -> t.type() == TokenType.OPERATION)
+                            .map(this::toOperation)
+                            .toList();
 
-                return new ParsedRow(i, operations);
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                    return new ParsedRow(i, operations);
+                })
+                .toList();
 
         return new ParsedPattern(parsedRows);
+    }
+
+    private ParsedOperation toOperation(Token token) {
+        return new ParsedOperation(OperationType.from(token.value()));
     }
 }
