@@ -69,7 +69,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 ## Features
 
 ### Currently Implemented
-Parse text-based crochet patterns into a structured model
+- Parse text-based crochet patterns into a structured model
 - Tokenization and expansion of pattern syntax (e.g. repeats, numeric prefixes)
 - Input validation for pattern correctness (flat and circular modes)
 - Formal stitch topology modeling using required/produced stitch semantics (RR/RO)
