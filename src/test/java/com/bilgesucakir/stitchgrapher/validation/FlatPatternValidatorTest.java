@@ -151,4 +151,25 @@ class FlatPatternValidatorTest {
                 "Magic rings are not allowed in flat patterns"
         );
     }
+
+    @Test
+    void validate_nonFirstRowDoesNotConsumeAnyFromPrevious_throws(){
+        ParsedRow row1 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
+        ));
+        ParsedRow row2 = new ParsedRow(1, List.of(
+                new ParsedOperation(OperationType.SC),
+                new ParsedOperation(OperationType.SC)
+        ));
+        ParsedRow row3 = new ParsedRow(2, List.of(
+                new ParsedOperation(OperationType.CH)
+        ));
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row1, row2, row3));
+
+        assertThrowsExactly(ValidationException.class, () -> validator.validate(pattern),
+                "Row 2 must consume at least 1 stitch from previous row. Chain-only rows must be appended to the previous row."
+        );
+    }
 }

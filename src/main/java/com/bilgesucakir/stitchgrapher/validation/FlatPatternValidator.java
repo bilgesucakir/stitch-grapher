@@ -24,10 +24,10 @@ public class FlatPatternValidator implements PatternValidator{
             // empty row check
             ensureNonEmptyRow(row);
 
-            // first row chain check
-            if(row.index() == 0){
-                ensureCHOnlyFirstRow(row);
-            }
+            // first row must be chain only
+            // later rows cannot be chain only
+            ensureChainOnlyFirstRowAndNonChainOnlyLaterRows(row);
+
 
             // magic ring operation check
             ensureNonMROperationType(row);
@@ -51,9 +51,13 @@ public class FlatPatternValidator implements PatternValidator{
         }
     }
 
-    private void ensureCHOnlyFirstRow(ParsedRow row) {
-        if(row.operations().stream().anyMatch(o-> !o.type().equals(OperationType.CH))){
+    private void ensureChainOnlyFirstRowAndNonChainOnlyLaterRows(ParsedRow row) {
+        if(row.index() == 0 && row.operations().stream().anyMatch(o-> !o.type().equals(OperationType.CH))){
             throw new ValidationException("Row 0 should contain chains only");
+        }
+        if(row.index() != 0 && row.operations().stream().allMatch(o-> o.type().equals(OperationType.CH))){
+            throw new ValidationException("Row " + row.index() + " must consume at least 1 stitch from previous row. " +
+                    "Chain-only rows must be appended to the previous row.");
         }
     }
 

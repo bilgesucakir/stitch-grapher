@@ -112,3 +112,27 @@ button:hover {
     width: 100%;
     height: 100%;
 }
+
+#error-box {
+    background: #3a1f1f;
+    color: #ffb3b3;
+    border: 1px solid #ff4d4d;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.hidden {
+    display: none;
+}
+
+.error-input {
+    border: 2px solid #ff4d4d;
+    background: #2a1a1a;
+}
+
+#rows-container {
+    max-height: 60vh;
+    overflow-y: auto;
+}

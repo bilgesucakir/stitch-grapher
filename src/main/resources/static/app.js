@@ -43,6 +43,15 @@ function updateRowPlaceholders() {
 }
 
 function generateGraph() {
+
+  document.querySelectorAll('.row-input').forEach(input => {
+    input.classList.remove('error-input');
+  });
+
+  const errorBox = document.getElementById('error-box');
+  errorBox.innerText = '';
+  errorBox.classList.add('hidden');
+
   const rowInputs = document.querySelectorAll('.row-input');
   const rows = [];
   rowInputs.forEach(input => rows.push(input.value));
@@ -69,47 +78,130 @@ function generateGraph() {
       }
     })
     .catch(err => {
-      console.error('Failed to generate graph', err);
-      alert(err.message);
+      console.error(err);
+
+      const message = err.message || "";
+
+      const errorBox = document.getElementById('error-box');
+
+      // reset
+      errorBox.innerText = '';
+      errorBox.classList.add('hidden');
+
+      const isRowError = message.includes("Row");
+
+      if (isRowError) {
+        highlightErrorRow(message);
+
+        // ✅ ALSO show message
+        errorBox.innerText = message;
+        errorBox.classList.remove('hidden');
+
+      } else {
+        errorBox.innerText = "Something went wrong";
+        errorBox.classList.remove('hidden');
+      }
     });
+}
+
+function highlightErrorRow(message) {
+  const inputs = document.querySelectorAll('.row-input');
+
+  inputs.forEach(input => input.classList.remove('error-input'));
+
+  const match = message.match(/Row (\d+)/);
+  if (!match) return;
+
+  const rowIndex = parseInt(match[1], 10);
+
+  const input = inputs[rowIndex];
+
+  if (!input) return;
+
+  input.classList.add('error-input');
+
+  setTimeout(() => {
+    input.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }, 50);
 }
 
 function renderFlatGraph(data) {
   const elements = [];
   const spacing = 140;
-  const offsetX = 100;
-  const offsetY = 100;
   const rowSpacing = 140;
-  const rowLengths = {};
+  const offsetY = 100;
 
-  data.nodes.forEach(node => {
-    rowLengths[node.row] = (rowLengths[node.row] || 0) + 1;
+  // 🔹 Build parent map
+  const parentMap = {};
+  data.edges.forEach(edge => {
+    if (!parentMap[edge.target]) {
+      parentMap[edge.target] = [];
+    }
+    parentMap[edge.target].push(edge.source);
   });
 
-  const maxRowLength = Math.max(...Object.values(rowLengths));
-  const maxRow = Math.max(...data.nodes.map(node => node.row));
-
+  // 🔹 Group nodes by row
+  const rows = {};
   data.nodes.forEach(node => {
-    const visualPosition =
-      node.direction === 'LEFT_TO_RIGHT'
-        ? node.position
-        : rowLengths[node.row] - node.position - 1;
+    if (!rows[node.row]) rows[node.row] = [];
+    rows[node.row].push(node);
+  });
 
-    const rowStartX =
-      offsetX + ((maxRowLength - rowLengths[node.row]) * spacing) / 2;
+  const sortedRows = Object.keys(rows)
+    .map(Number)
+    .sort((a, b) => a - b);
 
-    const x = rowStartX + visualPosition * spacing;
-    const y = (maxRow - node.row) * rowSpacing + offsetY;
+  const nodePositions = {};
+  const totalRows = sortedRows.length;
 
-    elements.push({
-      data: { id: node.id, label: node.label },
-      position: { x, y }
+  sortedRows.forEach((rowIndex, rowOrder) => {
+    const rowNodes = rows[rowIndex];
+
+    const isLTR = rowOrder % 2 === 0;
+
+    let startX = 100;
+
+    // 🔥 CORE FIX: anchor to FIRST node's parent (NOT row edge)
+    if (rowOrder > 0) {
+      for (const node of rowNodes) {
+        const parents = parentMap[node.id];
+
+        if (parents && parents.length > 0) {
+          const parentX = nodePositions[parents[0]]?.x;
+
+          if (parentX !== undefined) {
+            startX = parentX;
+            break;
+          }
+        }
+      }
+    }
+
+    rowNodes.forEach((node, i) => {
+      const x = isLTR
+        ? startX + i * spacing
+        : startX - i * spacing;
+
+      const y = (totalRows - rowOrder - 1) * rowSpacing + offsetY;
+
+      nodePositions[node.id] = { x, y };
+
+      elements.push({
+        data: { id: node.id, label: node.label },
+        position: { x, y }
+      });
     });
   });
 
-  data.edges.forEach(edge =>
-    elements.push({ data: { source: edge.source, target: edge.target } })
-  );
+  // 🔹 Edges
+  data.edges.forEach(edge => {
+    elements.push({
+      data: { source: edge.source, target: edge.target }
+    });
+  });
 
   const container = document.getElementById('cy');
   container.innerHTML = '';

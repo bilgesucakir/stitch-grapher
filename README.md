@@ -30,7 +30,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 ## A Basic Example
 
 - **Input Pattern**:
-  - `3sc`
+  - `3ch`
   - `inc sc inc`
   - `2dec sc`
   - `FLAT`
@@ -45,19 +45,20 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 ## More Complex Example
 
 - **Input Pattern**:
-  - `6sc`
-  - `6inc`
-  - `(sc, inc)x6`
-  - `(2sc, inc)x6`
-  - `(3sc, inc)x6`
-  - `30sc`
-  - `30sc`
-  - `30sc`
-  - `(3sc, dec)x6`
-  - `(2sc, dec)x6`
-  - `(sc, dec)x6`
-  - `6dec`
-  - `CIRCULAR`
+    - `mr`
+    - `6sc`
+    - `6inc`
+    - `(sc, inc)x6`
+    - `(2sc, inc)x6`
+    - `(3sc, inc)x6`
+    - `30sc`
+    - `30sc`
+    - `30sc`
+    - `(3sc, dec)x6`
+    - `(2sc, dec)x6`
+    - `(sc, dec)x6`
+    - `6dec`
+    - `CIRCULAR`
 - **Output**: Sample graph visualization showing stitch connections and hierarchy
   - Screenshot from front:<br>![img_1.png](img_1.png)
   - Screenshot from the top:<br>![img_2.png](img_2.png)
