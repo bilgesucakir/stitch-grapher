@@ -25,7 +25,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 
 ### To Be Implemented
 - Better visualization of 3d circular patterns and 2d flat patterns
-- Turn, chain, magic ring, fasten off operations
+- Turn, fasten off operations
 
 ## A Basic Example
 
