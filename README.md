@@ -19,7 +19,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 - Visualize patterns:
   - 2D layout for flat crochet
   - 3D circular layout for amigurumi-style patterns
-- Support multiple stitch types (SC, HDC, DC, HTR, TR, SLST)
+- Support multiple stitch types and operations SC, HDC, DC, HTR, TR, SLST, CH, MR, INC, DEC
 - Handle row direction for flat patterns
 - Expose a REST API to generate graphs from patterns
 
