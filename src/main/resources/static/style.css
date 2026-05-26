@@ -22,3 +22,15 @@ h1 {
     margin-bottom: 8px;
     width: 300px;
 }
+
+.row-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.delete-row-btn {
+    height: 32px;
+    cursor: pointer;
+}

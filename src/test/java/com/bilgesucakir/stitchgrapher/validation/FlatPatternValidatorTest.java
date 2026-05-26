@@ -12,8 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 class FlatPatternValidatorTest {
@@ -25,14 +24,14 @@ class FlatPatternValidatorTest {
     @Test
     void validate_unusedStitchesExist_doesNotThrow() {
 
-        // row1: 3sc → RO=3
+        // row1: 3sc → produced=3
         ParsedRow row1 = new ParsedRow(0, List.of(
-                new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC)
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
         ));
 
-        // row2: 2sc → RR=2 (1 unused → valid)
+        // row2: 2sc → consumed=2 (1 unused → valid)
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC)
@@ -49,14 +48,14 @@ class FlatPatternValidatorTest {
     @Test
     void validate_rowRequiresExactlyPreviousOutput_doesNotThrow() {
 
-        // row1: 3sc → RO=3
+        // row1: 3sc → produced=3
         ParsedRow row1 = new ParsedRow(0, List.of(
-                new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC)
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
         ));
 
-        // row2: 3sc → RR=3 (exactly matches previous output → valid)
+        // row2: 3sc → consumed=3 (exactly matches previous output → valid)
         //ch consumes no parent
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.SC),
@@ -78,14 +77,14 @@ class FlatPatternValidatorTest {
     @Test
     void validate_rowRequiresMoreThanPreviousOutput_throws() {
 
-        // row1: 3sc → RO=3
+        // row1: 3sc → produced=3
         ParsedRow row1 = new ParsedRow(0, List.of(
-                new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC),
-                new ParsedOperation(OperationType.SC)
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
         ));
 
-        // row2: 2dec → RR=4 (needs 4 > 3 → invalid)
+        // row2: 2dec → consumed=4 (needs 4 > 3 → invalid)
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.DEC),
                 new ParsedOperation(OperationType.DEC)
@@ -94,8 +93,62 @@ class FlatPatternValidatorTest {
         ParsedPattern pattern =
                 new ParsedPattern(List.of(row1, row2));
 
-        assertThrows(ValidationException.class, () ->
-                validator.validate(pattern)
+        assertThrowsExactly(ValidationException.class, () ->
+                validator.validate(pattern),
+                "Row 1 requires 4 stitches but previous row produced only 3"
+        );
+    }
+
+    @Test
+    void validate_nonChainFirstRow_throws(){
+        ParsedRow row1 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.SC),
+                new ParsedOperation(OperationType.CH)
+        ));
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row1));
+
+        assertThrowsExactly(ValidationException.class,
+                () -> validator.validate(pattern),
+                "Row 0 must contain only chains");
+    }
+
+    @Test
+    void validate_emptyRow_throws(){
+        ParsedRow row1 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
+        ));
+
+        ParsedRow row2 = new ParsedRow(1, List.of());
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row1, row2));
+
+        assertThrowsExactly(ValidationException.class,
+                () -> validator.validate(pattern),
+                "Row 1 cannot be empty");
+    }
+
+    @Test
+    void validate_hasMagicRing_throws(){
+        ParsedRow row1 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH)
+        ));
+
+        ParsedRow row2 = new ParsedRow(1, List.of(
+                new ParsedOperation(OperationType.MR),
+                new ParsedOperation(OperationType.DEC)
+        ));
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row1, row2));
+
+        assertThrowsExactly(ValidationException.class, () ->
+                        validator.validate(pattern),
+                "Magic rings are not allowed in flat patterns"
         );
     }
 }

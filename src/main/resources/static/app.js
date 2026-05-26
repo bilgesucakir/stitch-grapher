@@ -168,10 +168,9 @@ function renderCircularGraph3D(data) {
     rowLengths[node.row] = (rowLengths[node.row] || 0) + 1;
   });
 
-  const baseRadius = 40;
-  const radiusScale = 12;
+  const baseRadius = 20;
+  const radiusScale = 10;
 
-  // --- Compute dynamic row heights ---
   const rowHeights = {};
   let currentY = 0;
 
@@ -181,8 +180,9 @@ function renderCircularGraph3D(data) {
     .forEach(row => {
       const stitchCount = rowLengths[row];
 
-      // smoother growth (more natural)
-      const radius = baseRadius + Math.sqrt(stitchCount) * radiusScale * 3;
+      const radius =
+        baseRadius +
+        Math.pow(stitchCount, 0.6) * radiusScale * 2;
 
       const dynamicHeight = 40 + radius * 0.2;
 
@@ -190,16 +190,21 @@ function renderCircularGraph3D(data) {
       currentY += dynamicHeight;
     });
 
-  // center vertically
   const maxY = Math.max(...Object.values(rowHeights));
   const minY = Math.min(...Object.values(rowHeights));
   const centerOffset = (maxY + minY) / 2;
 
-  // --- Create nodes ---
   data.nodes.forEach(node => {
     const stitchCount = rowLengths[node.row];
 
-    const radius = baseRadius + Math.sqrt(stitchCount) * radiusScale * 3;
+    let radius =
+      baseRadius +
+      Math.pow(stitchCount, 0.6) * radiusScale * 2;
+
+    //compress first row
+    if (node.row === 0) {
+      radius *= 0.5;
+    }
 
     const angle = (2 * Math.PI * node.position) / stitchCount;
 
@@ -217,7 +222,7 @@ function renderCircularGraph3D(data) {
     nodeMap[node.id] = { x, y, z };
   });
 
-  // --- Create edges ---
+  // --- edges ---
   data.edges.forEach(edge => {
     const source = nodeMap[edge.source];
     const target = nodeMap[edge.target];

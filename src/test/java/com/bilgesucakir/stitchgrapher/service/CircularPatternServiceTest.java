@@ -37,7 +37,7 @@ class CircularPatternServiceTest {
     @Test
     void generateGraph_validFlow_callsAllDependencies() {
 
-        PatternInputDto input = new PatternInputDto(List.of("3sc"), null);
+        PatternInputDto input = new PatternInputDto(List.of("mr", "3sc"), null);
 
         ParsedPattern parsedPattern = mock(ParsedPattern.class);
         StitchGraph graph = mock(StitchGraph.class);
