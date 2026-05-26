@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 
 let rowCounter = 0;
@@ -47,6 +46,7 @@ function generateGraph() {
   const rowInputs = document.querySelectorAll('.row-input');
   const rows = [];
   rowInputs.forEach(input => rows.push(input.value));
+
   const mode = document.getElementById('crochet-mode').value;
 
   fetch('/api/graph', {
@@ -103,7 +103,7 @@ function renderFlatGraph(data) {
 
     elements.push({
       data: { id: node.id, label: node.label },
-      position: { x: x, y: y }
+      position: { x, y }
     });
   });
 
@@ -115,8 +115,8 @@ function renderFlatGraph(data) {
   container.innerHTML = '';
 
   cytoscape({
-    container: container,
-    elements: elements,
+    container,
+    elements,
     style: [
       {
         selector: 'node',
@@ -145,15 +145,13 @@ function renderCircularGraph3D(data) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
 
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    5000
-  );
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+
+  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 5000);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, 900);
+  renderer.setSize(width, height);
   container.appendChild(renderer.domElement);
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -201,7 +199,6 @@ function renderCircularGraph3D(data) {
       baseRadius +
       Math.pow(stitchCount, 0.6) * radiusScale * 2;
 
-    //compress first row
     if (node.row === 0) {
       radius *= 0.5;
     }
@@ -222,7 +219,6 @@ function renderCircularGraph3D(data) {
     nodeMap[node.id] = { x, y, z };
   });
 
-  // --- edges ---
   data.edges.forEach(edge => {
     const source = nodeMap[edge.source];
     const target = nodeMap[edge.target];
@@ -238,6 +234,15 @@ function renderCircularGraph3D(data) {
 
     const line = new THREE.Line(geometry, material);
     scene.add(line);
+  });
+
+  window.addEventListener('resize', () => {
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
   });
 
   function animate() {

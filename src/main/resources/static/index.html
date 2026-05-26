@@ -15,23 +15,48 @@
   <script type="module" src="app.js"></script>
 </head>
 <body>
-  <h1>Stitch Grapher</h1>
 
-  <div id="mode-selector">
-    <label for="crochet-mode">Crochet mode:</label>
-    <select id="crochet-mode">
-      <option value="FLAT">Flat</option>
-      <option value="CIRCULAR">Circular</option>
-    </select>
+<!-- Top bar -->
+<div class="topbar">
+  <div class="app-title">🧵 Stitch Grapher</div>
+  <a class="github-link" href="https://github.com/bilgesucakir/stitch-grapher" target="_blank">
+    GitHub repo
+  </a>
+</div>
+
+<!-- Main layout -->
+<div class="app-container">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="section">
+      <select id="crochet-mode">
+        <option value="FLAT">Flat Mode</option>
+        <option value="CIRCULAR">Circular Mode</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <div id="rows-container"></div>
+    </div>
+
+    <div class="section buttons">
+      <button id="add-row-btn">+ Add Row</button>
+      <button id="generate-graph-btn" class="primary-btn">
+        Generate
+      </button>
+    </div>
+
   </div>
 
-  <div id="controls">
-    <div id="rows-container"></div>
-    <button id="add-row-btn">Add Row</button>
-    <button id="generate-graph-btn">Generate Graph</button>
+  <!-- RIGHT CONTENT -->
+  <div class="main-view">
+    <div id="cy"></div>
   </div>
 
-  <div id="cy"></div>
+</div>
+
 </body>
 
 </html>
