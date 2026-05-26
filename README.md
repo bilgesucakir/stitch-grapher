@@ -89,7 +89,7 @@ Accepts a JSON payload with crochet pattern rows and returns a graph representat
 ```json
 {
   "rows": [
-    "3sc"
+    "3ch"
   ], 
   "mode": "FLAT"
 }
@@ -101,21 +101,21 @@ Accepts a JSON payload with crochet pattern rows and returns a graph representat
   "nodes": [
     {
       "id": "5ebe4049-239a-4bba-b337-6648d3646009",
-      "label": "SC",
+      "label": "CH",
       "row": 0,
       "position": 0,
       "direction": "LEFT_TO_RIGHT"
     },
     {
       "id": "604dbe0d-5dae-485f-bb1d-0c715395c801",
-      "label": "SC",
+      "label": "CH",
       "row": 0,
       "position": 1,
       "direction": "LEFT_TO_RIGHT"
     },
     {
       "id": "3d04c832-a2f0-4a2b-8730-b21134b874b0",
-      "label": "SC",
+      "label": "CH",
       "row": 0,
       "position": 2,
       "direction": "LEFT_TO_RIGHT"
