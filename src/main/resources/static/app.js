@@ -134,7 +134,6 @@ function renderFlatGraph(data) {
   const rowSpacing = 140;
   const offsetY = 100;
 
-  // 🔹 Build parent map
   const parentMap = {};
   data.edges.forEach(edge => {
     if (!parentMap[edge.target]) {
@@ -143,7 +142,6 @@ function renderFlatGraph(data) {
     parentMap[edge.target].push(edge.source);
   });
 
-  // 🔹 Group nodes by row
   const rows = {};
   data.nodes.forEach(node => {
     if (!rows[node.row]) rows[node.row] = [];
@@ -164,7 +162,6 @@ function renderFlatGraph(data) {
 
     let startX = 100;
 
-    // 🔥 CORE FIX: anchor to FIRST node's parent (NOT row edge)
     if (rowOrder > 0) {
       for (const node of rowNodes) {
         const parents = parentMap[node.id];
@@ -196,7 +193,6 @@ function renderFlatGraph(data) {
     });
   });
 
-  // 🔹 Edges
   data.edges.forEach(edge => {
     elements.push({
       data: { source: edge.source, target: edge.target }
