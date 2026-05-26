@@ -25,16 +25,21 @@ class CircularPatternValidatorTest {
     @Test
     void validate_exactConsumption_doesNotThrow() {
 
-        // row1: 3sc → RO=3
-        ParsedRow row1 = new ParsedRow(0, List.of(
+        // row0: MR -> no required input,
+        ParsedRow row0 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.MR)
+        ));
+
+        // row1: consumed = MR allowed, produced=3
+        ParsedRow row1 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC)
         ));
 
-        // row2: 3sc → RR=3 (exact match)
+        // row2: 3sc → consumed=3 (exact match)
         // ch consumes no parent
-        ParsedRow row2 = new ParsedRow(1, List.of(
+        ParsedRow row2 = new ParsedRow(2, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
@@ -44,7 +49,7 @@ class CircularPatternValidatorTest {
         ));
 
         ParsedPattern pattern =
-                new ParsedPattern(List.of(row1, row2));
+                new ParsedPattern(List.of(row0, row1, row2));
 
         assertDoesNotThrow(() ->
                 validator.validate(pattern)
@@ -54,21 +59,25 @@ class CircularPatternValidatorTest {
     @Test
     void validate_notAllStitchesConsumed_throws() {
 
-        // row1: 3sc → RO=3
+        ParsedRow row0 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.MR)
+        ));
+
+        // row1: 3sc → produced=3
         ParsedRow row1 = new ParsedRow(0, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC)
         ));
 
-        // row2: 2sc → RR=2 (1 unused → invalid in circular)
+        // row2: 2sc → consumed=2 (1 unused → invalid in circular)
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC)
         ));
 
         ParsedPattern pattern =
-                new ParsedPattern(List.of(row1, row2));
+                new ParsedPattern(List.of(row0, row1, row2));
 
         assertThrows(ValidationException.class, () ->
                 validator.validate(pattern)
@@ -78,21 +87,65 @@ class CircularPatternValidatorTest {
     @Test
     void validate_requiresMoreThanAvailable_throws() {
 
-        // row1: 3sc → RO=3
+        ParsedRow row0 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.MR)
+        ));
+
+        // row1: 3sc → produced=3
         ParsedRow row1 = new ParsedRow(0, List.of(
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC),
                 new ParsedOperation(OperationType.SC)
         ));
 
-        // row2: 2dec → RR=4 (invalid)
+        // row2: 2dec → consumed=4 (invalid)
         ParsedRow row2 = new ParsedRow(1, List.of(
                 new ParsedOperation(OperationType.DEC),
                 new ParsedOperation(OperationType.DEC)
         ));
 
         ParsedPattern pattern =
-                new ParsedPattern(List.of(row1, row2));
+                new ParsedPattern(List.of(row0, row1, row2));
+
+        assertThrows(ValidationException.class, () ->
+                validator.validate(pattern)
+        );
+    }
+
+    @Test
+    void validate_emptyRow_throws(){
+        ParsedRow row0 = new ParsedRow(0, List.of());
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row0));
+
+        assertThrows(ValidationException.class, () ->
+                validator.validate(pattern)
+        );
+    }
+
+    @Test
+    void validate_NonPureCHFirstRow_throws(){
+        ParsedRow row0 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.CH),
+                new ParsedOperation(OperationType.SC),
+                new ParsedOperation(OperationType.CH)
+        ));
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row0));
+
+        assertThrows(ValidationException.class, () ->
+                validator.validate(pattern)
+        );
+    }
+
+    @Test
+    void validate_NonMROnlyFirstRow_throws(){
+        ParsedRow row0 = new ParsedRow(0, List.of(
+                new ParsedOperation(OperationType.SC)
+        ));
+
+        ParsedPattern pattern = new ParsedPattern(List.of(row0));
 
         assertThrows(ValidationException.class, () ->
                 validator.validate(pattern)

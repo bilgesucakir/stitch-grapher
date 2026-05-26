@@ -37,7 +37,7 @@ class GraphControllerTest {
     void generateGraph_circularMode_routesToCircularService_andMapsResult() {
 
         PatternInputDto input =
-                new PatternInputDto(List.of("3sc"), CrochetMode.CIRCULAR);
+                new PatternInputDto(List.of("mr", "3sc"), CrochetMode.CIRCULAR);
 
         StitchGraph graph = mock(StitchGraph.class);
         StitchGraphDto expectedDto = new StitchGraphDto(List.of(), List.of());

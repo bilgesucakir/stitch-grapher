@@ -85,7 +85,7 @@ public class PatternTokenizer {
 
     private boolean isOperation(String value) {
         return switch (value.toLowerCase()) {
-            case "sc", "inc", "dec", "hdc", "dc", "htr", "tr", "slst", "ch" -> true;
+            case "sc", "inc", "dec", "hdc", "dc", "htr", "tr", "slst", "ch", "mr" -> true;
             default -> false;
         };
     }

@@ -1,5 +1,6 @@
 package com.bilgesucakir.stitchgrapher.validation;
 import com.bilgesucakir.stitchgrapher.exception.ValidationException;
+import com.bilgesucakir.stitchgrapher.parser.OperationType;
 import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 
 import com.bilgesucakir.stitchgrapher.exception.InvalidPatternException;
@@ -20,23 +21,51 @@ public class FlatPatternValidator implements PatternValidator{
 
         for (ParsedRow row : pattern.rows()) {
 
-            int rr = 0;
-            int ro = 0;
-            for (ParsedOperation op : row.operations()) {
-                rr += op.type().getRequiredInput();
-                ro += op.type().getProducedOutput();
+            // empty row check
+            ensureNonEmptyRow(row);
+
+            // first row chain check
+            if(row.index() == 0){
+                ensureCHOnlyFirstRow(row);
             }
 
-            if (previousOutput != null && rr > previousOutput) {
-                int rowNum = row.index() + 1;
+            // magic ring operation check
+            ensureNonMROperationType(row);
+
+            int consumed = 0;
+            int produced = 0;
+            for (ParsedOperation op : row.operations()) {
+                consumed += op.type().getRequiredInput();
+                produced += op.type().getProducedOutput();
+            }
+
+            if (previousOutput != null && consumed > previousOutput) {
                 throw new ValidationException(
-                        "Row " + rowNum +
-                                " requires " + rr +
+                        "Row " + row.index() +
+                                " requires " + consumed +
                                 " stitches but previous row produced only " + previousOutput
                 );
             }
 
-            previousOutput = ro;
+            previousOutput = produced;
+        }
+    }
+
+    private void ensureCHOnlyFirstRow(ParsedRow row) {
+        if(row.operations().stream().anyMatch(o-> !o.type().equals(OperationType.CH))){
+            throw new ValidationException("Row 0 should contain chains only");
+        }
+    }
+
+    private void ensureNonEmptyRow(ParsedRow row){
+        if(row.operations().isEmpty()){
+            throw new ValidationException("Row " + row.index() + " cannot be empty");
+        }
+    }
+
+    private void ensureNonMROperationType(ParsedRow row){
+        if(row.operations().stream().anyMatch(o -> o.type().equals(OperationType.MR))){
+            throw new ValidationException("Magic rings are not allowed in flat patterns");
         }
     }
 }

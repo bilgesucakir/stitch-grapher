@@ -25,9 +25,9 @@ public class FlatTopologyBuilderTest {
     void build_oneRow_buildsCorrectTopology() {
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
-                        new ParsedOperation(OperationType.SC),
-                        new ParsedOperation(OperationType.DC),
-                        new ParsedOperation(OperationType.TR)
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH)
                 ))
         ));
 
@@ -43,9 +43,9 @@ public class FlatTopologyBuilderTest {
         StitchNode nodeSecond = graph.getRows().get(0).getStitches().get(1);
         StitchNode nodeThird = graph.getRows().get(0).getStitches().get(2);
 
-        assertEquals(StitchType.SC, nodeFirst.getStitch().getType());
-        assertEquals(StitchType.DC, nodeSecond.getStitch().getType());
-        assertEquals(StitchType.TR, nodeThird.getStitch().getType());
+        assertEquals(StitchType.CH, nodeFirst.getStitch().getType());
+        assertEquals(StitchType.CH, nodeSecond.getStitch().getType());
+        assertEquals(StitchType.CH, nodeThird.getStitch().getType());
 
         assertThat(nodeFirst.getChildren()).isEmpty();
         assertThat(nodeSecond.getChildren()).isEmpty();
@@ -68,9 +68,9 @@ public class FlatTopologyBuilderTest {
     void build_twoRowsAllConsuming_buildsCorrectTopology() {
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
-                        new ParsedOperation(OperationType.SC),
-                        new ParsedOperation(OperationType.DC),
-                        new ParsedOperation(OperationType.TR)
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH)
                 )),
                 new ParsedRow(1, List.of(
                         new ParsedOperation(OperationType.SC),
@@ -100,9 +100,9 @@ public class FlatTopologyBuilderTest {
         StitchNode nodeThirdRow1 = graph.getRows().get(1).getStitches().get(2);
 
         //Verify first row
-        assertEquals(StitchType.SC, nodeFirst.getStitch().getType());
-        assertEquals(StitchType.DC, nodeSecond.getStitch().getType());
-        assertEquals(StitchType.TR, nodeThird.getStitch().getType());
+        assertEquals(StitchType.CH, nodeFirst.getStitch().getType());
+        assertEquals(StitchType.CH, nodeSecond.getStitch().getType());
+        assertEquals(StitchType.CH, nodeThird.getStitch().getType());
 
         assertThat(nodeFirst.getChildren().size()).isEqualTo(1);
         assertThat(nodeSecond.getChildren().size()).isEqualTo(1);
@@ -154,9 +154,9 @@ public class FlatTopologyBuilderTest {
     void build_twoRowsWithDangling_buildsCorrectTopology() {
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
-                        new ParsedOperation(OperationType.SC),
-                        new ParsedOperation(OperationType.DC),
-                        new ParsedOperation(OperationType.TR)
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH)
                 )),
                 new ParsedRow(1, List.of(
                         new ParsedOperation(OperationType.SC),
@@ -184,9 +184,9 @@ public class FlatTopologyBuilderTest {
         StitchNode nodeSecondRow1 = graph.getRows().get(1).getStitches().get(1);
 
         //Verify first row
-        assertEquals(StitchType.SC, nodeFirst.getStitch().getType());
-        assertEquals(StitchType.DC, nodeSecond.getStitch().getType());
-        assertEquals(StitchType.TR, nodeThird.getStitch().getType());
+        assertEquals(StitchType.CH, nodeFirst.getStitch().getType());
+        assertEquals(StitchType.CH, nodeSecond.getStitch().getType());
+        assertEquals(StitchType.CH, nodeThird.getStitch().getType());
 
         assertThat(nodeFirst.getChildren()).isEmpty();
         assertThat(nodeSecond.getChildren().size()).isEqualTo(1);
@@ -242,7 +242,7 @@ public class FlatTopologyBuilderTest {
     void build_singleRowWithOneStitch_buildsCorrectGraph() {
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
-                        new ParsedOperation(OperationType.HDC)
+                        new ParsedOperation(OperationType.CH)
                 ))
         ));
 
@@ -253,7 +253,7 @@ public class FlatTopologyBuilderTest {
         assertEquals(1, graph.getRows().get(0).getStitches().size());
 
         StitchNode node = graph.getRows().get(0).getStitches().get(0);
-        assertEquals(StitchType.HDC, node.getStitch().getType());
+        assertEquals(StitchType.CH, node.getStitch().getType());
         assertThat(node.getNext()).isNull();
         assertThat(node.getPrevious()).isNull();
         assertThat(node.getChildren()).isEmpty();
@@ -264,7 +264,7 @@ public class FlatTopologyBuilderTest {
     void build_multipleRowsWithOneStichEach_buildsCorrectGraph() {
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
-                        new ParsedOperation(OperationType.SC)
+                        new ParsedOperation(OperationType.CH)
                 )),
                 new ParsedRow(1, List.of(
                         new ParsedOperation(OperationType.DC)
@@ -281,7 +281,7 @@ public class FlatTopologyBuilderTest {
 
         // Verify first row
         StitchNode nodeRow0 = graph.getRows().get(0).getStitches().get(0);
-        assertEquals(StitchType.SC, nodeRow0.getStitch().getType());
+        assertEquals(StitchType.CH, nodeRow0.getStitch().getType());
         assertThat(nodeRow0.getNext()).isNull();
         assertThat(nodeRow0.getPrevious()).isNull();
         assertThat(nodeRow0.getChildren().size()).isEqualTo(1);
@@ -312,8 +312,8 @@ public class FlatTopologyBuilderTest {
     void build_twoRowsExpandingWithChains_buildsCorrectGraph(){
         ParsedPattern pattern = new ParsedPattern(List.of(
                 new ParsedRow(0, List.of(
-                        new ParsedOperation(OperationType.SC),
-                        new ParsedOperation(OperationType.SC)
+                        new ParsedOperation(OperationType.CH),
+                        new ParsedOperation(OperationType.CH)
                 )),
                 new ParsedRow(1, List.of(
                         new ParsedOperation(OperationType.SC),

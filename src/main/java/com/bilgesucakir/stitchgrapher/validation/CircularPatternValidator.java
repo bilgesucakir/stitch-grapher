@@ -2,6 +2,7 @@ package com.bilgesucakir.stitchgrapher.validation;
 
 import com.bilgesucakir.stitchgrapher.exception.InvalidPatternException;
 import com.bilgesucakir.stitchgrapher.exception.ValidationException;
+import com.bilgesucakir.stitchgrapher.parser.OperationType;
 import com.bilgesucakir.stitchgrapher.parser.ParsedOperation;
 import com.bilgesucakir.stitchgrapher.parser.ParsedPattern;
 import com.bilgesucakir.stitchgrapher.parser.ParsedRow;
@@ -20,24 +21,51 @@ public class CircularPatternValidator implements PatternValidator {
 
         for (ParsedRow row : pattern.rows()) {
 
-            int rr = 0;
-            int ro = 0;
+            ensureNonEmptyRow(row);
+            ensureMROrCHFirstRow(row);
+
+            int consumed = 0;
+            int produced = 0;
 
             for (ParsedOperation op : row.operations()) {
-                rr += op.type().getRequiredInput();
-                ro += op.type().getProducedOutput();
+                consumed += op.type().getRequiredInput();
+                produced += op.type().getProducedOutput();
             }
 
-            if (previousOutput != null && rr != previousOutput) {
-                int rowNum = row.index() + 1;
-                throw new ValidationException(
-                        "Row " + rowNum +
-                                " must consume exactly " + previousOutput +
-                                " stitches but requires " + rr
-                );
+            if (previousOutput != null) {
+                if (!wasPreviousMR(pattern, row) && consumed != previousOutput) {
+                    throw new ValidationException(
+                            "Row " + row.index() +
+                                    " must consume exactly " + previousOutput +
+                                    " stitches but requires " + consumed
+                    );
+                }
             }
+            previousOutput = produced;
+        }
+    }
 
-            previousOutput = ro;
+    private boolean wasPreviousMR(ParsedPattern pattern, ParsedRow row) {
+        return pattern.rows()
+                .get(row.index() - 1)
+                .operations().stream()
+                .allMatch(op -> op.type() == OperationType.MR);
+    }
+
+    private void ensureMROrCHFirstRow(ParsedRow row) {
+       if(row.index() == 0){
+           boolean isValid = ((row.operations().size() == 1) && row.operations().get(0).type().equals(OperationType.MR)
+                   || row.operations().stream().allMatch(o -> o.type().equals(OperationType.CH)));
+
+           if(!isValid){
+               throw new ValidationException("Row 0 can have one magic ring or only chains");
+           }
+       }
+    }
+
+    private void ensureNonEmptyRow(ParsedRow row){
+        if(row.operations().isEmpty()){
+            throw new ValidationException("Row " + row.index() + " cannot be empty");
         }
     }
 }

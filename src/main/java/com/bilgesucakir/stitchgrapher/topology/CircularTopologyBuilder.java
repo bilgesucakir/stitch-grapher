@@ -18,6 +18,7 @@ import static com.bilgesucakir.stitchgrapher.graph.RowDirection.LEFT_TO_RIGHT;
 /**
  * Builds a stitch graph for circular patterns where rows are arranged concentrically.
  * Supports increases, decreases, stitches like single, double, etc. and chain stitches.
+ * Handles MR (magic ring) as a structural row (no nodes produced).
  */
 @Component
 public class CircularTopologyBuilder implements TopologyBuilder {
@@ -35,16 +36,19 @@ public class CircularTopologyBuilder implements TopologyBuilder {
         List<Row> builtRows = new ArrayList<>();
 
         for (ParsedRow parsedRow : pattern.rows()) {
+
             Row row = new Row(parsedRow.index(), LEFT_TO_RIGHT);
             List<StitchNode> rowNodes = new ArrayList<>();
 
-            // STEP 1: create nodes (respect RO)
+            // STEP 1: create nodes (respect produced output)
             for (ParsedOperation operation : parsedRow.operations()) {
 
                 int produced = operation.type().getProducedOutput();
 
                 for (int i = 0; i < produced; i++) {
-                    StitchNode node = new StitchNode(stitchFactory.createForOutput(operation.type()));
+                    StitchNode node = new StitchNode(
+                            stitchFactory.createForOutput(operation.type())
+                    );
                     row.addStitch(node);
                     rowNodes.add(node);
                 }
@@ -55,12 +59,17 @@ public class CircularTopologyBuilder implements TopologyBuilder {
                 rowNodes.get(i).connectNext(rowNodes.get(i + 1));
             }
 
+            // STEP 3: connect to previous row (if exists)
             if (!builtRows.isEmpty()) {
+
                 Row previousRow = builtRows.get(builtRows.size() - 1);
                 List<StitchNode> previousNodes = previousRow.getStitches();
 
-                // circular continuity (last → first)
-                previousNodes.get(previousNodes.size() - 1).connectNext(rowNodes.get(0));
+                // only connect circular continuity if previous row has nodes
+                if (!previousNodes.isEmpty() && !rowNodes.isEmpty()) {
+                    previousNodes.get(previousNodes.size() - 1)
+                            .connectNext(rowNodes.get(0));
+                }
 
                 int cursor = 0;
                 int currentIndex = 0;
@@ -72,9 +81,16 @@ public class CircularTopologyBuilder implements TopologyBuilder {
 
                     List<StitchNode> parents = List.of();
 
-                    // Only assign parents if something is consumed
-                    if (required > 0) {
-                        parents = previousNodes.subList(cursor, cursor + required);
+                    // only assign parents if previous row has nodes
+                    if (required > 0 && !previousNodes.isEmpty()) {
+
+                        int end = cursor + required;
+
+                        if (end <= previousNodes.size()) {
+                            parents = previousNodes.subList(cursor, end);
+                        } else {
+                            parents = List.of(); // fallback safe behavior
+                        }
                     }
 
                     for (int j = 0; j < produced; j++) {
@@ -85,15 +101,20 @@ public class CircularTopologyBuilder implements TopologyBuilder {
                         }
                     }
 
-                    // Only move cursor if something was consumed
+                    // move cursor only if consuming
                     if (required > 0) {
                         cursor += required;
                     }
                 }
             }
-            builtRows.add(row);
-            graph.addRow(row);
+
+            // (MR row produces 0 → skipped)
+            if (!rowNodes.isEmpty()) {
+                builtRows.add(row);
+                graph.addRow(row);
+            }
         }
+
         return graph;
     }
 }

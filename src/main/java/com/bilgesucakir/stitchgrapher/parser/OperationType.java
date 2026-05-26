@@ -18,7 +18,8 @@ public enum OperationType {
     HTR(1,1),
     TR(1,1),
     SLST(1,1),
-    CH(0,1);
+    CH(0,1),
+    MR(0, 0);
 
     private final int requiredInput;
     private final int producedOutput;
@@ -41,6 +42,7 @@ public enum OperationType {
             case "tr" -> TR;
             case "slst" -> SLST;
             case "ch" -> CH;
+            case "mr" -> MR;
 
             default -> throw new ParseException(
                     "Unknown token: " + token
