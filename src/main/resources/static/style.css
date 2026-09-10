@@ -388,6 +388,33 @@ button {
   height: 100%;
 }
 
+.anim-controls {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+}
+
+.anim-controls button {
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  color: var(--text-soft);
+  background: rgba(35, 32, 32, 0.82);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.anim-controls button:hover { color: var(--text); border-color: var(--text-faint); }
+.anim-controls button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus); }
+#anim-speed { min-width: 36px; text-align: center; }
+
 .canvas-empty {
   position: absolute;
   inset: 0;

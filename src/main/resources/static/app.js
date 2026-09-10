@@ -258,6 +258,7 @@ function generateGraph() {
     })
     .then(data => {
       hideEmptyState();
+      lastGraph = { data, mode };
       if (mode === 'CIRCULAR') {
         renderCircularGraph3D(data);
       } else {
@@ -382,9 +383,75 @@ function highlightErrorRow(message) {
   }, 50);
 }
 
+/* ---------- Build animation ---------- */
+let animSpeed = 1;
+let currentAnim = null;
+let lastGraph = null;
+let circularLoop = 0;
+
+const animControls = document.getElementById('anim-controls');
+document.getElementById('anim-replay').addEventListener('click', replayGraph);
+document.getElementById('anim-skip').addEventListener('click', () => currentAnim && currentAnim.skip());
+
+const animSpeedBtn = document.getElementById('anim-speed');
+animSpeedBtn.addEventListener('click', () => {
+  animSpeed = animSpeed === 1 ? 2 : animSpeed === 2 ? 4 : 1;
+  animSpeedBtn.textContent = animSpeed + '×';
+});
+
+function replayGraph() {
+  if (!lastGraph) return;
+  if (lastGraph.mode === 'CIRCULAR') renderCircularGraph3D(lastGraph.data);
+  else renderFlatGraph(lastGraph.data);
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Node objects in the order the stitches are worked: row, then position. */
+function workedOrder(data) {
+  return data.nodes.slice().sort((a, b) => a.row - b.row || a.position - b.position);
+}
+
+/**
+ * Reveal `total` items one at a time by calling step(i) in worked order.
+ * Runs onComplete() once the whole sequence is shown (also on skip / instant).
+ * Returns immediately and stores a controller (with skip()) in currentAnim.
+ */
+function runReveal(total, step, onComplete) {
+  if (currentAnim) currentAnim.cancel();
+  animControls.classList.remove('hidden');
+
+  const finish = () => {
+    for (let i = 0; i < total; i++) step(i);
+    if (onComplete) onComplete();
+  };
+
+  if (total <= 1 || prefersReducedMotion()) {
+    finish();
+    currentAnim = null;
+    return;
+  }
+
+  const perStep = Math.max(28, Math.min(150, 3600 / total)) / animSpeed;
+  const timers = [];
+  for (let i = 0; i < total; i++) {
+    timers.push(window.setTimeout(() => step(i), i * perStep));
+  }
+  const endTimer = window.setTimeout(() => {
+    if (onComplete) onComplete();
+    currentAnim = null;
+  }, total * perStep + 80);
+
+  currentAnim = {
+    cancel() { timers.forEach(clearTimeout); clearTimeout(endTimer); },
+    skip() { timers.forEach(clearTimeout); clearTimeout(endTimer); finish(); currentAnim = null; }
+  };
+}
+
 /* ---------- Flat (2D) rendering ---------- */
 function renderFlatGraph(data) {
-  const elements = [];
   const spacing = 140;
   const rowSpacing = 140;
   const offsetY = 100;
@@ -394,19 +461,18 @@ function renderFlatGraph(data) {
 
   const parentMap = {};
   data.edges.forEach(edge => {
-    if (!parentMap[edge.target]) parentMap[edge.target] = [];
-    parentMap[edge.target].push(edge.source);
+    (parentMap[edge.target] = parentMap[edge.target] || []).push(edge.source);
   });
 
   const rows = {};
   data.nodes.forEach(node => {
-    if (!rows[node.row]) rows[node.row] = [];
-    rows[node.row].push(node);
+    (rows[node.row] = rows[node.row] || []).push(node);
   });
 
   const sortedRows = Object.keys(rows).map(Number).sort((a, b) => a - b);
-  const nodePositions = {};
   const totalRows = sortedRows.length;
+  const nodePositions = {};
+  const elements = [];
 
   sortedRows.forEach((rowIndex, rowOrder) => {
     const worked = rows[rowIndex];
@@ -450,18 +516,35 @@ function renderFlatGraph(data) {
       nodePositions[node.id] = { x: xs[i], y };
       elements.push({
         data: { id: node.id, label: node.label, color: stitchColor(node.label) },
-        position: { x: xs[i], y }
+        position: { x: xs[i], y },
+        classes: 'reveal-hidden'
       });
     });
   });
 
+  let edgeSeq = 0;
   data.edges.forEach(edge => {
     const sameRow = rowById[edge.source] === rowById[edge.target];
     elements.push({
-      data: { source: edge.source, target: edge.target },
-      classes: sameRow ? 'next-edge' : 'parent-edge'
+      data: { id: 'e' + (edgeSeq++), source: edge.source, target: edge.target },
+      classes: (sameRow ? 'next-edge' : 'parent-edge') + ' reveal-hidden'
     });
   });
+
+  // synthetic "turn" edges: end of one row up to the start of the next
+  for (let k = 0; k < sortedRows.length - 1; k++) {
+    const from = rows[sortedRows[k]];
+    const to = rows[sortedRows[k + 1]];
+    if (!from.length || !to.length) continue;
+    elements.push({
+      data: {
+        id: 'e' + (edgeSeq++),
+        source: from[from.length - 1].id,
+        target: to[0].id
+      },
+      classes: 'turn-edge reveal-hidden'
+    });
+  }
 
   const container = document.getElementById('cy');
   container.innerHTML = '';
@@ -486,7 +569,9 @@ function renderFlatGraph(data) {
           'font-size': 10,
           'font-weight': 600,
           'text-valign': 'center',
-          'text-halign': 'center'
+          'text-halign': 'center',
+          'transition-property': 'opacity',
+          'transition-duration': '150ms'
         }
       },
       {
@@ -496,15 +581,14 @@ function renderFlatGraph(data) {
           'width': 1.6,
           'line-color': NEXT_EDGE_COLOR,
           'target-arrow-color': NEXT_EDGE_COLOR,
-          'arrow-scale': 0.8
+          'arrow-scale': 0.8,
+          'transition-property': 'opacity',
+          'transition-duration': '150ms'
         }
       },
       {
         selector: 'edge.next-edge',
-        style: {
-          'line-color': NEXT_EDGE_COLOR,
-          'target-arrow-shape': 'none'
-        }
+        style: { 'line-color': NEXT_EDGE_COLOR, 'target-arrow-shape': 'none' }
       },
       {
         selector: 'edge.parent-edge',
@@ -514,18 +598,57 @@ function renderFlatGraph(data) {
           'target-arrow-shape': 'triangle',
           'opacity': 0.7
         }
-      }
+      },
+      {
+        selector: 'edge.turn-edge',
+        style: {
+          'line-color': '#7d7169',
+          'line-style': 'dashed',
+          'line-dash-pattern': [5, 4],
+          'target-arrow-shape': 'none',
+          'opacity': 0.5
+        }
+      },
+      { selector: '.reveal-hidden', style: { 'opacity': 0 } }
     ],
     layout: { name: 'preset', fit: true, padding: 60 }
   });
 
   cy.userZoomingEnabled(true);
+
+  const seq = workedOrder(data);
+  const stepOf = {};
+  seq.forEach((n, i) => { stepOf[n.id] = i; });
+
+  const edgesByStep = {};
+  cy.edges().forEach(edge => {
+    const s = stepOf[edge.data('source')];
+    const t = stepOf[edge.data('target')];
+    const at = Math.max(s == null ? 0 : s, t == null ? 0 : t);
+    (edgesByStep[at] = edgesByStep[at] || []).push(edge);
+  });
+
+  runReveal(
+    seq.length,
+    (i) => {
+      cy.batch(() => {
+        cy.getElementById(seq[i].id).removeClass('reveal-hidden');
+        (edgesByStep[i] || []).forEach(edge => edge.removeClass('reveal-hidden'));
+      });
+    },
+    () => {
+      // the turn connectors only guide the eye while building — drop them after
+      cy.edges('.turn-edge').addClass('reveal-hidden');
+    }
+  );
 }
 
 /* ---------- Circular (3D) rendering ---------- */
 function renderCircularGraph3D(data) {
   const container = document.getElementById('cy');
   container.innerHTML = '';
+
+  const myLoop = ++circularLoop;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(CANVAS_BG);
@@ -557,6 +680,7 @@ function renderCircularGraph3D(data) {
   controls.update();
 
   const nodeMap = {};
+  const spheres = {};
   const rowLengths = {};
   data.nodes.forEach(node => {
     rowLengths[node.row] = (rowLengths[node.row] || 0) + 1;
@@ -570,14 +694,12 @@ function renderCircularGraph3D(data) {
   Object.keys(rowLengths).map(Number).sort((a, b) => a - b).forEach(row => {
     const stitchCount = rowLengths[row];
     const radius = baseRadius + Math.pow(stitchCount, 0.6) * radiusScale * 2;
-    const dynamicHeight = 40 + radius * 0.2;
     rowHeights[row] = currentY;
-    currentY += dynamicHeight;
+    currentY += 40 + radius * 0.2;
   });
 
-  const maxY = Math.max(...Object.values(rowHeights));
-  const minY = Math.min(...Object.values(rowHeights));
-  const centerOffset = (maxY + minY) / 2;
+  const heightVals = Object.values(rowHeights);
+  const centerOffset = (Math.max(...heightVals) + Math.min(...heightVals)) / 2;
 
   const sphereGeometry = new THREE.SphereGeometry(16, 24, 24);
 
@@ -591,30 +713,36 @@ function renderCircularGraph3D(data) {
     const z = radius * Math.sin(angle);
     const y = rowHeights[node.row] - centerOffset;
 
-    const material = new THREE.MeshStandardMaterial({
+    const sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({
       color: new THREE.Color(stitchColor(node.label)),
       roughness: 0.55,
       metalness: 0.05
-    });
-    const sphere = new THREE.Mesh(sphereGeometry, material);
+    }));
     sphere.position.set(x, y, z);
+    sphere.visible = false;
+    sphere.scale.setScalar(0.001);
+    sphere.userData.grow = false;
     scene.add(sphere);
 
     nodeMap[node.id] = { x, y, z };
+    spheres[node.id] = sphere;
   });
 
   const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x6b615a, transparent: true, opacity: 0.8 });
+  const lines = [];
   data.edges.forEach(edge => {
     const source = nodeMap[edge.source];
     const target = nodeMap[edge.target];
     if (!source || !target) return;
 
-    const points = [
+    const geometry = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(source.x, source.y, source.z),
       new THREE.Vector3(target.x, target.y, target.z)
-    ];
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    scene.add(new THREE.Line(geometry, edgeMaterial));
+    ]);
+    const line = new THREE.Line(geometry, edgeMaterial);
+    line.visible = false;
+    scene.add(line);
+    lines.push({ line, a: edge.source, b: edge.target });
   });
 
   window.addEventListener('resize', () => {
@@ -626,10 +754,34 @@ function renderCircularGraph3D(data) {
   });
 
   function animate() {
+    if (myLoop !== circularLoop) { renderer.dispose(); return; }
     requestAnimationFrame(animate);
     controls.update();
+    for (const id in spheres) {
+      const s = spheres[id];
+      if (s.userData.grow && s.scale.x < 1) {
+        s.scale.setScalar(Math.min(1, s.scale.x + 0.16));
+      }
+    }
     renderer.render(scene, camera);
   }
-
   animate();
+
+  const seq = workedOrder(data);
+  const stepOf = {};
+  seq.forEach((n, i) => { stepOf[n.id] = i; });
+
+  const linesByStep = {};
+  lines.forEach(L => {
+    const s = stepOf[L.a];
+    const t = stepOf[L.b];
+    const at = Math.max(s == null ? 0 : s, t == null ? 0 : t);
+    (linesByStep[at] = linesByStep[at] || []).push(L.line);
+  });
+
+  runReveal(seq.length, (i) => {
+    const sphere = spheres[seq[i].id];
+    if (sphere) { sphere.visible = true; sphere.userData.grow = true; }
+    (linesByStep[i] || []).forEach(line => { line.visible = true; });
+  });
 }
