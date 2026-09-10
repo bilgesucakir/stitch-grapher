@@ -1,0 +1,14 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: New + > Blueprint, point Render at this repo.
+services:
+  - type: web
+    name: stitch-grapher
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Render injects PORT; the app already reads server.port=${PORT:8080}.
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75
