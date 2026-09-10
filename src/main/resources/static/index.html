@@ -26,7 +26,17 @@
 <!-- Top bar -->
 <header class="topbar">
   <div class="topbar-left">
-    <div class="app-title"><span class="app-mark">✳</span> Stitch Grapher</div>
+    <div class="app-title">
+      <svg class="app-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="12" r="8"/>
+        <ellipse cx="11" cy="12" rx="3.2" ry="7.8" transform="rotate(35 11 12)"/>
+        <ellipse cx="11" cy="12" rx="3.2" ry="7.8" transform="rotate(-35 11 12)"/>
+        <ellipse cx="11" cy="12" rx="7.4" ry="3" transform="rotate(35 11 12)"/>
+        <path d="M15.9 17.6c1.6 1 2.7 2.3 3 3.9"/>
+      </svg>
+      Stitch Grapher
+    </div>
     <button id="howto-btn" class="howto-btn"><span class="q">?</span> How to use</button>
   </div>
   <a class="github-link" href="https://github.com/bilgesucakir/stitch-grapher" target="_blank" rel="noopener" aria-label="GitHub repository">
@@ -53,11 +63,17 @@
     </div>
 
     <div class="section rows-section">
-      <label class="field-label">Pattern</label>
+      <div class="pattern-head">
+        <label class="field-label">Pattern</label>
+        <span id="total-count" class="total-count"></span>
+      </div>
       <div id="rows-container"></div>
-      <button id="add-row-btn" class="ghost-btn">
-        <span class="btn-plus">+</span> Add row
-      </button>
+      <div class="row-actions">
+        <button id="add-row-btn" class="ghost-btn">
+          <span class="btn-plus">+</span> Add row
+        </button>
+        <button id="clear-rows-btn" class="ghost-btn">Clear all</button>
+      </div>
       <button id="generate-graph-btn" class="primary-btn">Generate graph</button>
       <div id="error-box" class="hidden"></div>
     </div>
@@ -68,7 +84,14 @@
   <main class="main-view">
     <div id="cy"></div>
     <div id="canvas-empty" class="canvas-empty">
-      <div class="canvas-empty-mark">✳</div>
+      <svg class="canvas-empty-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="12" r="8"/>
+        <ellipse cx="11" cy="12" rx="3.2" ry="7.8" transform="rotate(35 11 12)"/>
+        <ellipse cx="11" cy="12" rx="3.2" ry="7.8" transform="rotate(-35 11 12)"/>
+        <ellipse cx="11" cy="12" rx="7.4" ry="3" transform="rotate(35 11 12)"/>
+        <path d="M15.9 17.6c1.6 1 2.7 2.3 3 3.9"/>
+      </svg>
       <p>Add your pattern rows and hit <strong>Generate graph</strong>.</p>
     </div>
   </main>

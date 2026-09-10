@@ -26,7 +26,19 @@ let rowCounter = 0;
 addRow();
 
 document.getElementById('add-row-btn').addEventListener('click', addRow);
+document.getElementById('clear-rows-btn').addEventListener('click', clearAllRows);
 document.getElementById('generate-graph-btn').addEventListener('click', generateGraph);
+
+function clearAllRows() {
+  document.getElementById('rows-container').innerHTML = '';
+  rowCounter = 0;
+  addRow();
+  updateTotalCount();
+
+  const errorBox = document.getElementById('error-box');
+  errorBox.innerText = '';
+  errorBox.classList.add('hidden');
+}
 
 /* ---------- How-to modal ---------- */
 const HOWTO_PAGES = [
@@ -178,7 +190,10 @@ function addRow() {
       generateGraph();
     }
   });
-  input.addEventListener('input', () => updateRowCount(rowWrapper));
+  input.addEventListener('input', () => {
+    updateRowCount(rowWrapper);
+    updateTotalCount();
+  });
 
   const count = document.createElement('span');
   count.className = 'row-count';
@@ -191,6 +206,7 @@ function addRow() {
   deleteBtn.addEventListener('click', () => {
     rowWrapper.remove();
     updateRowPlaceholders();
+    updateTotalCount();
   });
 
   rowWrapper.appendChild(input);
@@ -330,6 +346,19 @@ function updateRowCount(item) {
   badge.textContent = n === null ? '' : `${n} st${n === 1 ? '' : 's'}`;
 }
 
+function updateTotalCount() {
+  const el = document.getElementById('total-count');
+  if (!el) return;
+
+  let total = 0;
+  document.querySelectorAll('.row-input').forEach(input => {
+    const n = countRowStitches(input.value);
+    if (n !== null) total += n;
+  });
+
+  el.textContent = total > 0 ? `${total} sts total` : '';
+}
+
 function hideEmptyState() {
   const empty = document.getElementById('canvas-empty');
   if (empty) empty.classList.add('hidden');
@@ -380,28 +409,48 @@ function renderFlatGraph(data) {
   const totalRows = sortedRows.length;
 
   sortedRows.forEach((rowIndex, rowOrder) => {
-    const rowNodes = rows[rowIndex];
-    const isLTR = rowOrder % 2 === 0;
-    let startX = 100;
+    const worked = rows[rowIndex];
+    const y = (totalRows - rowOrder - 1) * rowSpacing + offsetY;
 
-    if (rowOrder > 0) {
-      for (const node of rowNodes) {
-        const parents = parentMap[node.id];
-        if (parents && parents.length > 0) {
-          const parentX = nodePositions[parents[0]]?.x;
-          if (parentX !== undefined) { startX = parentX; break; }
-        }
+    // lay the row out left-to-right on screen, honouring its worked direction
+    const rtl = worked[0] && worked[0].direction === 'RIGHT_TO_LEFT';
+    const ordered = rtl ? worked.slice().reverse() : worked.slice();
+
+    // where each stitch would like to sit: centred over the stitch(es) it is
+    // worked into, so an increase straddles its parent instead of pushing right
+    const desired = [];
+    ordered.forEach((node, i) => {
+      const parentXs = (parentMap[node.id] || [])
+        .map(pid => nodePositions[pid] && nodePositions[pid].x)
+        .filter(x => x !== undefined);
+
+      if (parentXs.length > 0) {
+        desired[i] = parentXs.reduce((a, b) => a + b, 0) / parentXs.length;
+      } else if (i > 0) {
+        desired[i] = desired[i - 1] + spacing;
+      } else {
+        desired[i] = 0;
       }
+    });
+
+    // resolve overlaps by keeping a minimum gap, then shift the whole row back
+    // so it stays centred under the stitches it grew from
+    const xs = desired.slice();
+    for (let i = 1; i < xs.length; i++) {
+      if (xs[i] - xs[i - 1] < spacing) xs[i] = xs[i - 1] + spacing;
+    }
+    if (rowOrder > 0 && xs.length > 0) {
+      const meanX = xs.reduce((a, b) => a + b, 0) / xs.length;
+      const meanDesired = desired.reduce((a, b) => a + b, 0) / desired.length;
+      const shift = meanX - meanDesired;
+      for (let i = 0; i < xs.length; i++) xs[i] -= shift;
     }
 
-    rowNodes.forEach((node, i) => {
-      const x = isLTR ? startX + i * spacing : startX - i * spacing;
-      const y = (totalRows - rowOrder - 1) * rowSpacing + offsetY;
-      nodePositions[node.id] = { x, y };
-
+    ordered.forEach((node, i) => {
+      nodePositions[node.id] = { x: xs[i], y };
       elements.push({
         data: { id: node.id, label: node.label, color: stitchColor(node.label) },
-        position: { x, y }
+        position: { x: xs[i], y }
       });
     });
   });
