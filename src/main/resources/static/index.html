@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stitch Grapher</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+
+  <script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
   <script type="importmap">
     {
       "imports": {
@@ -17,48 +24,73 @@
 <body>
 
 <!-- Top bar -->
-<div class="topbar">
-  <div class="app-title">🧵 Stitch Grapher</div>
-  <a class="github-link" href="https://github.com/bilgesucakir/stitch-grapher" target="_blank">
-    GitHub repo
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="app-title"><span class="app-mark">✳</span> Stitch Grapher</div>
+    <button id="howto-btn" class="howto-btn"><span class="q">?</span> How to use</button>
+  </div>
+  <a class="github-link" href="https://github.com/bilgesucakir/stitch-grapher" target="_blank" rel="noopener" aria-label="GitHub repository">
+    <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" fill="currentColor">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
   </a>
-</div>
+</header>
 
 <!-- Main layout -->
 <div class="app-container">
 
   <!-- LEFT SIDEBAR -->
-  <div class="sidebar">
+  <aside class="sidebar">
 
     <div class="section">
-      <select id="crochet-mode">
-        <option value="FLAT">Flat Mode</option>
-        <option value="CIRCULAR">Circular Mode</option>
-      </select>
+      <label class="field-label" for="crochet-mode">Mode</label>
+      <div class="select-wrap">
+        <select id="crochet-mode">
+          <option value="FLAT">Flat</option>
+          <option value="CIRCULAR">Circular</option>
+        </select>
+      </div>
     </div>
 
-    <div class="section">
+    <div class="section rows-section">
+      <label class="field-label">Pattern</label>
       <div id="rows-container"></div>
-    </div>
-
-    <div id="error-box" class="hidden"></div>
-
-    <div class="section buttons">
-      <button id="add-row-btn">+ Add Row</button>
-      <button id="generate-graph-btn" class="primary-btn">
-        Generate
+      <button id="add-row-btn" class="ghost-btn">
+        <span class="btn-plus">+</span> Add row
       </button>
+      <button id="generate-graph-btn" class="primary-btn">Generate graph</button>
+      <div id="error-box" class="hidden"></div>
     </div>
 
-  </div>
+  </aside>
 
   <!-- RIGHT CONTENT -->
-  <div class="main-view">
+  <main class="main-view">
     <div id="cy"></div>
-  </div>
+    <div id="canvas-empty" class="canvas-empty">
+      <div class="canvas-empty-mark">✳</div>
+      <p>Add your pattern rows and hit <strong>Generate graph</strong>.</p>
+    </div>
+  </main>
 
 </div>
 
-</body>
+<!-- How-to modal -->
+<div id="howto-overlay" class="modal-overlay hidden">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+    <div class="modal-header">
+      <h2 class="modal-title" id="howto-title"></h2>
+      <div class="modal-dots" id="howto-dots"></div>
+    </div>
+    <div class="modal-body" id="howto-body"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="howto-exit">Exit</button>
+      <span class="spacer"></span>
+      <button class="btn-secondary" id="howto-prev">Previous</button>
+      <button class="primary-btn" id="howto-next">Next</button>
+    </div>
+  </div>
+</div>
 
+</body>
 </html>
