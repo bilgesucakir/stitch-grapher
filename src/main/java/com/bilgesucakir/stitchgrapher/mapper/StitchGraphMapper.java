@@ -31,7 +31,8 @@ public class StitchGraphMapper {
                         node.getStitch().getType().name(),
                         row.getIndex(),
                         i,
-                        row.getDirection().name()
+                        row.getDirection().name(),
+                        node.getStitch().getBaseHeight()
                 ));
             }
         }

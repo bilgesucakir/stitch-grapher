@@ -8,6 +8,7 @@ package com.bilgesucakir.stitchgrapher.dto;
  * @param row       The row number where the node is located in the graph.
  * @param position  The position of the node within its row.
  * @param direction The direction of the row (e.g., "LEFT_TO_RIGHT" or "RIGHT_TO_LEFT").
+ * @param height    The base height of the stitch, relative to a single crochet (1.0).
  */
-public record GraphNodeDto(String id, String label, int row, int position, String direction) {
+public record GraphNodeDto(String id, String label, int row, int position, String direction, float height) {
 }
