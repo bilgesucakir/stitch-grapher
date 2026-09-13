@@ -6,6 +6,8 @@ Java-based stitch connectivity graph engine for topology-aware crochet pattern p
 
 Stitch-grapher is a Spring Boot application that processes crochet patterns in text format and visualizes them as connectivity graphs. It models crochet stitches as a hierarchical abstraction layer, enabling complex pattern analysis and visualization.
 
+![ui.png](ui.png)
+
 ## Features
 
 ### Currently Implemented
@@ -65,8 +67,8 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
     - `6dec`
     - `CIRCULAR`
 - **Output**: Sample graph visualization showing stitch connections and hierarchy
-  - Screenshot from front:<br>![img_1.png](img_1.png)
-  - Screenshot from the top:<br>![img_2.png](img_2.png)
+
+![img_1.png](img_1.png)
 - Row stitches: 6 → 12 → 18 → 24 → 30 → 30 → 30 → 24 → 18 → 12 → 6
 
 ## Prerequisites
