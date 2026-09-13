@@ -22,10 +22,15 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
 - Support multiple stitch types SC, HDC, DC, HTR, TR, SLST
 - Handle row direction for flat patterns
 - Expose a REST API to generate graphs from patterns
+- Render each stitch's relative height (taller stitches like `DC`/`TR` draw as taller ellipses in 2D or ellipsoids in 3D than a baseline `SC`)
+  - A stitch's height carries into the next row/round: a stitch worked into a taller stitch sits higher, so rows/rings aren't forced flat
+  - The first round of a circular pattern (worked directly into the magic ring) renders cinched tightly around center, like a real magic ring, instead of at the same spacing as later rounds
+- Label each stitch in the 3D view (SC, DC, etc.)
 
 ### To Be Implemented
-- Better visualization of 3d circular patterns and 2d flat patterns
+- Further layout/visual polish for large or densely packed patterns
 - Turn, fasten off operations
+- FLO/BLO (front loop only, back loop only) operations
 
 ## A Basic Example
 

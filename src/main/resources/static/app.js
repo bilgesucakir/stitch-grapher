@@ -756,13 +756,21 @@ function renderCircularGraph3D(data) {
   const radiusScale = 10;
   const sphereRadius = 16;
 
-  // ring-size baseline gap between rounds, as before - independent of stitch height
   const sortedRowIndices = Object.keys(rowLengths).map(Number).sort((a, b) => a - b);
+  const firstRow = sortedRowIndices[0];
+
+  // the very first round is worked directly into the magic ring, so its
+  // stitches cinch together tightly around that tiny center point - much
+  // closer than a later round with the same stitch count
+  function ringRadius(row) {
+    const r = baseRadius + Math.pow(rowLengths[row], 0.6) * radiusScale * 2;
+    return row === firstRow ? r * 0.5 : r;
+  }
+
+  // ring-size baseline gap between rounds, as before - independent of stitch height
   const ringGap = {};
   sortedRowIndices.forEach(row => {
-    const stitchCount = rowLengths[row];
-    const radius = baseRadius + Math.pow(stitchCount, 0.6) * radiusScale * 2;
-    ringGap[row] = 40 + radius * 0.2;
+    ringGap[row] = 40 + ringRadius(row) * 0.2;
   });
 
   // true structural parents only (what each stitch was actually worked into) -
@@ -802,8 +810,7 @@ function renderCircularGraph3D(data) {
 
   data.nodes.forEach(node => {
     const stitchCount = rowLengths[node.row];
-    let radius = baseRadius + Math.pow(stitchCount, 0.6) * radiusScale * 2;
-    if (node.row === 0) radius *= 0.5;
+    const radius = ringRadius(node.row);
 
     const angle = (2 * Math.PI * node.position) / stitchCount;
     const x = radius * Math.cos(angle);
