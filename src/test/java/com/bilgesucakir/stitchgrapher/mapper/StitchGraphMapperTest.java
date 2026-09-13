@@ -5,6 +5,7 @@ import com.bilgesucakir.stitchgrapher.graph.Row;
 import com.bilgesucakir.stitchgrapher.graph.RowDirection;
 import com.bilgesucakir.stitchgrapher.graph.StitchGraph;
 import com.bilgesucakir.stitchgrapher.graph.StitchNode;
+import com.bilgesucakir.stitchgrapher.stitch.DoubleCrochet;
 import com.bilgesucakir.stitchgrapher.stitch.SingleCrochet;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ class StitchGraphMapperTest {
 
         StitchNode n1 = new StitchNode(new SingleCrochet());
         StitchNode n2 = new StitchNode(new SingleCrochet());
-        StitchNode n3 = new StitchNode(new SingleCrochet());
+        StitchNode n3 = new StitchNode(new DoubleCrochet());
 
         // row 0: n1 -> n2
         n1.connectNext(n2);
@@ -51,17 +52,32 @@ class StitchGraphMapperTest {
 
         assertThat(dto.nodes())
                 .extracting("label")
-                .containsOnly("SC");
+                .containsExactlyInAnyOrder("SC", "SC", "DC");
+
+        // height is mapped from the stitch's base height, not hardcoded
+        assertThat(dto.nodes())
+                .filteredOn(n -> n.id().equals(n1.getId().toString()))
+                .extracting("height")
+                .containsOnly(new SingleCrochet().getBaseHeight());
+
+        assertThat(dto.nodes())
+                .filteredOn(n -> n.id().equals(n3.getId().toString()))
+                .extracting("height")
+                .containsOnly(new DoubleCrochet().getBaseHeight());
 
         // edges (n1->n2 and n2->n3)
         assertThat(dto.edges()).hasSize(2);
 
+        // n1->n2 is the sequential working order (NEXT), not a structural parent
         assertThat(dto.edges())
                 .anyMatch(e -> e.source().equals(n1.getId().toString())
-                        && e.target().equals(n2.getId().toString()));
+                        && e.target().equals(n2.getId().toString())
+                        && e.type().equals("NEXT"));
 
+        // n2->n3 is a true structural parent (n3 was worked into n2)
         assertThat(dto.edges())
                 .anyMatch(e -> e.source().equals(n2.getId().toString())
-                        && e.target().equals(n3.getId().toString()));
+                        && e.target().equals(n3.getId().toString())
+                        && e.type().equals("PARENT"));
     }
 }

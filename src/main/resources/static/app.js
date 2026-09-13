@@ -21,6 +21,12 @@ const NODE_HALO = '#201d1b';
 
 const stitchColor = (label) => STITCH_COLORS[label] || DEFAULT_NODE_COLOR;
 
+/* A single crochet's base height is the reference "circle" — every other
+   stitch's height is expressed relative to it (taller stitches -> taller
+   ellipses/ellipsoids, shorter stitches -> flatter ones). */
+const SC_BASE_HEIGHT = 1.0;
+const heightRatio = (h) => Math.max(0.3, (h == null ? SC_BASE_HEIGHT : h) / SC_BASE_HEIGHT);
+
 /* ---------- Row management ---------- */
 let rowCounter = 0;
 addRow();
@@ -453,15 +459,18 @@ function runReveal(total, step, onComplete) {
 /* ---------- Flat (2D) rendering ---------- */
 function renderFlatGraph(data) {
   const spacing = 140;
-  const rowSpacing = 140;
   const offsetY = 100;
+  const NODE_DIAMETER = 34;
+  const ROW_PADDING = 106; // gap between two SC (ratio 1) rows matches the old fixed 140 rowSpacing
 
-  const rowById = {};
-  data.nodes.forEach(node => { rowById[node.id] = node.row; });
-
+  // true structural parents only - excludes "NEXT" (sequential working order)
+  // edges, so a stitch centres over what it was actually worked into, not
+  // also its same-row predecessor
   const parentMap = {};
   data.edges.forEach(edge => {
-    (parentMap[edge.target] = parentMap[edge.target] || []).push(edge.source);
+    if (edge.type === 'PARENT') {
+      (parentMap[edge.target] = parentMap[edge.target] || []).push(edge.source);
+    }
   });
 
   const rows = {};
@@ -470,13 +479,39 @@ function renderFlatGraph(data) {
   });
 
   const sortedRows = Object.keys(rows).map(Number).sort((a, b) => a - b);
-  const totalRows = sortedRows.length;
+
+  // each node's on-screen height reflects its stitch's base height relative
+  // to a single crochet
+  const nodeHeight = {};
+  data.nodes.forEach(node => {
+    nodeHeight[node.id] = NODE_DIAMETER * heightRatio(node.height);
+  });
+
+  // a node's elevation is how far its base sits above the foundation row;
+  // it clears the *tallest of its own parents*, not a whole-row average, so a
+  // tall stitch (e.g. a TR) pushes only the stitch(es) worked into it higher,
+  // while its neighbours atop shorter stitches stay lower - rows aren't flat
+  const elevation = {};
+  sortedRows.forEach(rowIndex => {
+    rows[rowIndex].forEach(node => {
+      const parents = parentMap[node.id] || [];
+      // no recorded parent (e.g. a circular pattern's first round, worked into
+      // a magic ring that isn't itself a node) -> baseline sits at 0, same as
+      // every other parentless stitch, growing upward only, never below it
+      const groundTop = parents.length === 0
+        ? 0
+        : Math.max(...parents.map(pid => elevation[pid] + nodeHeight[pid] / 2));
+      elevation[node.id] = groundTop + nodeHeight[node.id] / 2 + (parents.length === 0 ? 0 : ROW_PADDING);
+    });
+  });
+  const maxElevation = Math.max(0, ...Object.values(elevation));
+  const yOf = (node) => offsetY + (maxElevation - elevation[node.id]);
+
   const nodePositions = {};
   const elements = [];
 
-  sortedRows.forEach((rowIndex, rowOrder) => {
+  sortedRows.forEach((rowIndex) => {
     const worked = rows[rowIndex];
-    const y = (totalRows - rowOrder - 1) * rowSpacing + offsetY;
 
     // lay the row out left-to-right on screen, honouring its worked direction
     const rtl = worked[0] && worked[0].direction === 'RIGHT_TO_LEFT';
@@ -505,7 +540,7 @@ function renderFlatGraph(data) {
     for (let i = 1; i < xs.length; i++) {
       if (xs[i] - xs[i - 1] < spacing) xs[i] = xs[i - 1] + spacing;
     }
-    if (rowOrder > 0 && xs.length > 0) {
+    if (rowIndex !== sortedRows[0] && xs.length > 0) {
       const meanX = xs.reduce((a, b) => a + b, 0) / xs.length;
       const meanDesired = desired.reduce((a, b) => a + b, 0) / desired.length;
       const shift = meanX - meanDesired;
@@ -513,9 +548,10 @@ function renderFlatGraph(data) {
     }
 
     ordered.forEach((node, i) => {
+      const y = yOf(node);
       nodePositions[node.id] = { x: xs[i], y };
       elements.push({
-        data: { id: node.id, label: node.label, color: stitchColor(node.label) },
+        data: { id: node.id, label: node.label, color: stitchColor(node.label), h: nodeHeight[node.id] },
         position: { x: xs[i], y },
         classes: 'reveal-hidden'
       });
@@ -524,10 +560,9 @@ function renderFlatGraph(data) {
 
   let edgeSeq = 0;
   data.edges.forEach(edge => {
-    const sameRow = rowById[edge.source] === rowById[edge.target];
     elements.push({
       data: { id: 'e' + (edgeSeq++), source: edge.source, target: edge.target },
-      classes: (sameRow ? 'next-edge' : 'parent-edge') + ' reveal-hidden'
+      classes: (edge.type === 'NEXT' ? 'next-edge' : 'parent-edge') + ' reveal-hidden'
     });
   });
 
@@ -562,7 +597,7 @@ function renderFlatGraph(data) {
           'border-width': 2,
           'border-color': NODE_HALO,
           'width': 34,
-          'height': 34,
+          'height': 'data(h)',
           'label': 'data(label)',
           'color': '#fff',
           'font-family': 'Inter, sans-serif',
@@ -643,6 +678,36 @@ function renderFlatGraph(data) {
   );
 }
 
+/* Small canvas-texture sprites, cached per stitch label so we don't
+   redraw the same text canvas for every node of the same type. */
+const labelSpriteCache = {};
+function makeLabelSprite(text) {
+  if (!labelSpriteCache[text]) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.font = '700 40px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    labelSpriteCache[text] = texture;
+  }
+
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: labelSpriteCache[text],
+    depthTest: false,
+    transparent: true
+  }));
+  sprite.scale.set(28, 14, 1);
+  sprite.renderOrder = 1;
+  return sprite;
+}
+
 /* ---------- Circular (3D) rendering ---------- */
 function renderCircularGraph3D(data) {
   const container = document.getElementById('cy');
@@ -681,6 +746,7 @@ function renderCircularGraph3D(data) {
 
   const nodeMap = {};
   const spheres = {};
+  const labels = {};
   const rowLengths = {};
   data.nodes.forEach(node => {
     rowLengths[node.row] = (rowLengths[node.row] || 0) + 1;
@@ -688,20 +754,51 @@ function renderCircularGraph3D(data) {
 
   const baseRadius = 20;
   const radiusScale = 10;
-  const rowHeights = {};
-  let currentY = 0;
+  const sphereRadius = 16;
 
-  Object.keys(rowLengths).map(Number).sort((a, b) => a - b).forEach(row => {
+  // ring-size baseline gap between rounds, as before - independent of stitch height
+  const sortedRowIndices = Object.keys(rowLengths).map(Number).sort((a, b) => a - b);
+  const ringGap = {};
+  sortedRowIndices.forEach(row => {
     const stitchCount = rowLengths[row];
     const radius = baseRadius + Math.pow(stitchCount, 0.6) * radiusScale * 2;
-    rowHeights[row] = currentY;
-    currentY += 40 + radius * 0.2;
+    ringGap[row] = 40 + radius * 0.2;
   });
 
-  const heightVals = Object.values(rowHeights);
-  const centerOffset = (Math.max(...heightVals) + Math.min(...heightVals)) / 2;
+  // true structural parents only (what each stitch was actually worked into) -
+  // excludes "NEXT" edges (sequential working order), which for a round's
+  // closing stitch cross rows without being a real parent
+  const crossRowParentMap = {};
+  data.edges.forEach(edge => {
+    if (edge.type === 'PARENT') {
+      (crossRowParentMap[edge.target] = crossRowParentMap[edge.target] || []).push(edge.source);
+    }
+  });
 
-  const sphereGeometry = new THREE.SphereGeometry(16, 24, 24);
+  // a node's elevation clears the tallest of its own parents, not a whole
+  // ring's average - so a tall stitch (e.g. a TR) lifts only what sits on
+  // top of it, while its neighbours atop shorter stitches stay lower
+  const nodeHalfHeight = {};
+  data.nodes.forEach(node => { nodeHalfHeight[node.id] = sphereRadius * heightRatio(node.height); });
+
+  const elevation = {};
+  sortedRowIndices.forEach(row => {
+    data.nodes.filter(n => n.row === row).forEach(node => {
+      const parents = crossRowParentMap[node.id] || [];
+      // no recorded parent (e.g. a circular pattern's first round, worked
+      // into a magic ring that isn't itself a node) -> baseline sits at 0,
+      // same as every other parentless stitch, growing upward only
+      const groundTop = parents.length === 0
+        ? 0
+        : Math.max(...parents.map(pid => elevation[pid] + nodeHalfHeight[pid]));
+      elevation[node.id] = groundTop + nodeHalfHeight[node.id] + (parents.length === 0 ? 0 : ringGap[row]);
+    });
+  });
+
+  const elevationVals = Object.values(elevation);
+  const centerOffset = (Math.max(...elevationVals) + Math.min(...elevationVals)) / 2;
+
+  const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 24, 24);
 
   data.nodes.forEach(node => {
     const stitchCount = rowLengths[node.row];
@@ -711,7 +808,7 @@ function renderCircularGraph3D(data) {
     const angle = (2 * Math.PI * node.position) / stitchCount;
     const x = radius * Math.cos(angle);
     const z = radius * Math.sin(angle);
-    const y = rowHeights[node.row] - centerOffset;
+    const y = elevation[node.id] - centerOffset;
 
     const sphere = new THREE.Mesh(sphereGeometry, new THREE.MeshStandardMaterial({
       color: new THREE.Color(stitchColor(node.label)),
@@ -720,12 +817,21 @@ function renderCircularGraph3D(data) {
     }));
     sphere.position.set(x, y, z);
     sphere.visible = false;
-    sphere.scale.setScalar(0.001);
+    // stretched only along Y so taller stitches read as ellipsoids, not wider spheres
+    sphere.userData.heightRatio = heightRatio(node.height);
+    sphere.userData.progress = 0.001;
+    sphere.scale.set(0.001, 0.001 * sphere.userData.heightRatio, 0.001);
     sphere.userData.grow = false;
     scene.add(sphere);
 
+    const label = makeLabelSprite(node.label);
+    label.position.set(x, y, z);
+    label.visible = false;
+    scene.add(label);
+
     nodeMap[node.id] = { x, y, z };
     spheres[node.id] = sphere;
+    labels[node.id] = label;
   });
 
   const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x6b615a, transparent: true, opacity: 0.8 });
@@ -759,8 +865,10 @@ function renderCircularGraph3D(data) {
     controls.update();
     for (const id in spheres) {
       const s = spheres[id];
-      if (s.userData.grow && s.scale.x < 1) {
-        s.scale.setScalar(Math.min(1, s.scale.x + 0.16));
+      if (s.userData.grow && s.userData.progress < 1) {
+        s.userData.progress = Math.min(1, s.userData.progress + 0.16);
+        const p = s.userData.progress;
+        s.scale.set(p, p * s.userData.heightRatio, p);
       }
     }
     renderer.render(scene, camera);
@@ -782,6 +890,8 @@ function renderCircularGraph3D(data) {
   runReveal(seq.length, (i) => {
     const sphere = spheres[seq[i].id];
     if (sphere) { sphere.visible = true; sphere.userData.grow = true; }
+    const label = labels[seq[i].id];
+    if (label) label.visible = true;
     (linesByStep[i] || []).forEach(line => { line.visible = true; });
   });
 }

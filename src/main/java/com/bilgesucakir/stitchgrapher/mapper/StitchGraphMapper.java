@@ -31,7 +31,8 @@ public class StitchGraphMapper {
                         node.getStitch().getType().name(),
                         row.getIndex(),
                         i,
-                        row.getDirection().name()
+                        row.getDirection().name(),
+                        node.getStitch().getBaseHeight()
                 ));
             }
         }
@@ -41,13 +42,15 @@ public class StitchGraphMapper {
             if (node.getNext() != null) {
                 edges.add(new GraphEdgeDto(
                         node.getId().toString(),
-                        node.getNext().getId().toString()
+                        node.getNext().getId().toString(),
+                        "NEXT"
                 ));
             }
             for (StitchNode child : node.getChildren()) {
                 edges.add(new GraphEdgeDto(
                         node.getId().toString(),
-                        child.getId().toString()
+                        child.getId().toString(),
+                        "PARENT"
                 ));
             }
         }
