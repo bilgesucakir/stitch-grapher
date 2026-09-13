@@ -43,7 +43,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
   - `FLAT`
 - **Output**: Sample graph visualization showing stitch connections and hierarchy
 
-![img.png](img.png)
+![flat.png](flat.png)
 - First row produces 3 stitches. Second row has 2 increase operations using row 1 stitches (1x2 + 1 + 1x2), resulting in 5 stitches. Row 3 has 2 decrease operations using row 2 stitches ((1+1)/2 + (1+1)/2 + 1), resulting in 3 stitches.
 - So if you have an increase operation, you should have 2 child nodes in the next step. 
 - If you have a decrease operation, you should have 2 parent nodes in the previous step.
@@ -68,7 +68,7 @@ Stitch-grapher is a Spring Boot application that processes crochet patterns in t
     - `CIRCULAR`
 - **Output**: Sample graph visualization showing stitch connections and hierarchy
 
-![img_1.png](img_1.png)
+![circular.png](circular.png)
 - Row stitches: 6 → 12 → 18 → 24 → 30 → 30 → 30 → 24 → 18 → 12 → 6
 
 ## Prerequisites
