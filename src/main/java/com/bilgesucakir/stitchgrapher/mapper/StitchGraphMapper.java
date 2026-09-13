@@ -42,13 +42,15 @@ public class StitchGraphMapper {
             if (node.getNext() != null) {
                 edges.add(new GraphEdgeDto(
                         node.getId().toString(),
-                        node.getNext().getId().toString()
+                        node.getNext().getId().toString(),
+                        "NEXT"
                 ));
             }
             for (StitchNode child : node.getChildren()) {
                 edges.add(new GraphEdgeDto(
                         node.getId().toString(),
-                        child.getId().toString()
+                        child.getId().toString(),
+                        "PARENT"
                 ));
             }
         }

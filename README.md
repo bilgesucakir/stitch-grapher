@@ -104,35 +104,46 @@ Accepts a JSON payload with crochet pattern rows and returns a graph representat
       "label": "CH",
       "row": 0,
       "position": 0,
-      "direction": "LEFT_TO_RIGHT"
+      "direction": "LEFT_TO_RIGHT",
+      "height": 0.6
     },
     {
       "id": "604dbe0d-5dae-485f-bb1d-0c715395c801",
       "label": "CH",
       "row": 0,
       "position": 1,
-      "direction": "LEFT_TO_RIGHT"
+      "direction": "LEFT_TO_RIGHT",
+      "height": 0.6
     },
     {
       "id": "3d04c832-a2f0-4a2b-8730-b21134b874b0",
       "label": "CH",
       "row": 0,
       "position": 2,
-      "direction": "LEFT_TO_RIGHT"
+      "direction": "LEFT_TO_RIGHT",
+      "height": 0.6
     }
   ],
   "edges": [
     {
       "source": "5ebe4049-239a-4bba-b337-6648d3646009",
-      "target": "604dbe0d-5dae-485f-bb1d-0c715395c801"
+      "target": "604dbe0d-5dae-485f-bb1d-0c715395c801",
+      "type": "NEXT"
     },
     {
       "source": "604dbe0d-5dae-485f-bb1d-0c715395c801",
-      "target": "3d04c832-a2f0-4a2b-8730-b21134b874b0"
+      "target": "3d04c832-a2f0-4a2b-8730-b21134b874b0",
+      "type": "NEXT"
     }
   ]
 }
 ```
+
+**Node fields:**
+- `height` - the stitch's base height, relative to a single crochet (`1.0`). Used by the UI to render taller stitches (e.g. `DC`, `TR`) as taller ellipses/ellipsoids than shorter ones (e.g. `CH`, `SLST`).
+
+**Edge fields:**
+- `type` - `"NEXT"` for the sequential stitch-working order (in circular mode, this can cross rows at a round's closing stitch), or `"PARENT"` for a true structural relationship - the stitch(es) a node was actually worked into.
 
 ## Technologies
 

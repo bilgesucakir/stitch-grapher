@@ -68,12 +68,16 @@ class StitchGraphMapperTest {
         // edges (n1->n2 and n2->n3)
         assertThat(dto.edges()).hasSize(2);
 
+        // n1->n2 is the sequential working order (NEXT), not a structural parent
         assertThat(dto.edges())
                 .anyMatch(e -> e.source().equals(n1.getId().toString())
-                        && e.target().equals(n2.getId().toString()));
+                        && e.target().equals(n2.getId().toString())
+                        && e.type().equals("NEXT"));
 
+        // n2->n3 is a true structural parent (n3 was worked into n2)
         assertThat(dto.edges())
                 .anyMatch(e -> e.source().equals(n2.getId().toString())
-                        && e.target().equals(n3.getId().toString()));
+                        && e.target().equals(n3.getId().toString())
+                        && e.type().equals("PARENT"));
     }
 }
